@@ -1,0 +1,6 @@
+{
+  "name": "StudyQuest",
+  "description": "Gamified study reminder and quest tracker for students to conquer homework, tests, and upcoming deadlines with step-by-step progress tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
