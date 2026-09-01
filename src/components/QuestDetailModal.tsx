@@ -72,7 +72,10 @@ export const QuestDetailModal: React.FC<QuestDetailModalProps> = ({
     >
       <div
         id="quest-detail-modal"
-        className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-[#e0bbe4]/30 overflow-hidden flex flex-col max-h-[90vh] animate-scaleUp"
+        style={{
+          borderColor: 'var(--theme-subtle-border)',
+        }}
+        className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border overflow-hidden flex flex-col max-h-[90vh] animate-scaleUp"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -85,7 +88,13 @@ export const QuestDetailModal: React.FC<QuestDetailModalProps> = ({
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#eeedef] text-[#4c444c]">
                 {quest.subject}
               </span>
-              <span className="text-xs font-medium text-[#725477] bg-[#e0bbe4]/25 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+              <span
+                style={{
+                  backgroundColor: 'var(--theme-subtle)',
+                  color: 'var(--theme-primary)',
+                }}
+                className="text-xs font-medium px-2.5 py-0.5 rounded-md flex items-center gap-1"
+              >
                 <span className="material-symbols-outlined text-[14px]">calendar_month</span>
                 Due: {quest.deadlineFormatted || quest.deadline} {quest.deadlineTimeFormatted && `at ${quest.deadlineTimeFormatted}`}
               </span>
@@ -117,17 +126,28 @@ export const QuestDetailModal: React.FC<QuestDetailModalProps> = ({
           <div className="p-4 rounded-2xl bg-[#faf9fb] border border-[#eeedef] flex flex-col gap-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-bold text-[#4c444c] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[18px] text-[#725477]">
+                <span
+                  style={{ color: 'var(--theme-primary)' }}
+                  className="material-symbols-outlined text-[18px]"
+                >
                   checklist
                 </span>
                 Sub-steps Checked ({completedSteps}/{totalSteps})
               </span>
-              <span className="font-bold text-[#725477] text-base">{progressPercent}%</span>
+              <span
+                style={{ color: 'var(--theme-primary)' }}
+                className="font-bold text-base"
+              >
+                {progressPercent}%
+              </span>
             </div>
             <div className="w-full h-3 bg-[#eeedef] rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[#b1cdfd] to-[#e0bbe4] rounded-full transition-all duration-500 relative"
-                style={{ width: `${progressPercent}%` }}
+                style={{
+                  width: `${progressPercent}%`,
+                  backgroundColor: 'var(--theme-primary)',
+                }}
+                className="h-full rounded-full transition-all duration-500 relative"
               />
             </div>
           </div>
@@ -161,16 +181,29 @@ export const QuestDetailModal: React.FC<QuestDetailModalProps> = ({
           <div>
             <h4 className="text-sm font-bold text-[#1a1c1d] mb-3 flex items-center justify-between">
               <span>Steps to Conquer (+25 EXP each)</span>
-              <span className="text-xs font-normal text-[#725477]">Checking all finishes quest</span>
+              <span
+                style={{ color: 'var(--theme-primary)' }}
+                className="text-xs font-normal"
+              >
+                Checking all finishes quest
+              </span>
             </h4>
 
             {quest.steps.length === 0 ? (
               <div className="text-center py-6 px-4 bg-[#faf9fb] rounded-2xl border border-dashed border-[#cfc3cc]">
-                <span className="material-symbols-outlined text-3xl text-[#725477]/40 mb-1">
+                <span
+                  style={{ color: 'var(--theme-primary)' }}
+                  className="material-symbols-outlined text-3xl opacity-40 mb-1"
+                >
                   task_alt
                 </span>
                 <p className="text-sm text-[#4c444c] font-medium">No sub-steps added yet.</p>
-                <p className="text-xs text-[#725477]">Break down this project into smaller bite-sized steps below!</p>
+                <p
+                  style={{ color: 'var(--theme-primary)' }}
+                  className="text-xs font-medium"
+                >
+                  Break down this project into smaller bite-sized steps below!
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -180,7 +213,7 @@ export const QuestDetailModal: React.FC<QuestDetailModalProps> = ({
                     className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
                       step.completed
                         ? 'bg-[#f4f3f5]/70 border-[#e3e2e4] text-[#4c444c]'
-                        : 'bg-white border-[#eeedef] hover:border-[#e0bbe4] shadow-xs'
+                        : 'bg-white border-[#eeedef] hover:border-theme-primary shadow-xs'
                     }`}
                   >
                     <label className="flex items-center gap-3 flex-1 cursor-pointer select-none">
@@ -188,7 +221,10 @@ export const QuestDetailModal: React.FC<QuestDetailModalProps> = ({
                         type="checkbox"
                         checked={step.completed}
                         onChange={() => handleStepClick(step)}
-                        className="w-5 h-5 rounded-md text-[#725477] border-2 border-[#cfc3cc] focus:ring-[#e0bbe4] cursor-pointer accent-[#725477] transition-transform active:scale-125"
+                        style={{
+                          accentColor: 'var(--theme-primary)',
+                        }}
+                        className="w-5 h-5 rounded-md border-2 border-[#cfc3cc] cursor-pointer transition-transform active:scale-125"
                       />
                       <span
                         className={`text-sm font-medium ${
@@ -221,11 +257,14 @@ export const QuestDetailModal: React.FC<QuestDetailModalProps> = ({
                 value={newStepText}
                 onChange={(e) => setNewStepText(e.target.value)}
                 placeholder="+ Add a new step / checkpoint..."
-                className="flex-1 px-4 py-2.5 text-sm bg-[#faf9fb] border border-[#eeedef] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e0bbe4] focus:bg-white placeholder:text-[#4c444c]/40 font-medium"
+                className="flex-1 px-4 py-2.5 text-sm bg-[#faf9fb] border border-[#eeedef] rounded-xl focus:outline-none focus:ring-2 focus:ring-theme-primary focus:bg-white placeholder:text-[#4c444c]/40 font-medium"
               />
               <button
                 type="submit"
-                className="px-4 py-2.5 bg-[#e0bbe4] hover:bg-[#dfbbe4] text-[#66496b] font-bold text-sm rounded-xl transition-all active:scale-95 flex items-center gap-1 shadow-xs"
+                style={{
+                  backgroundColor: 'var(--theme-primary)',
+                }}
+                className="px-4 py-2.5 hover:opacity-90 text-white font-bold text-sm rounded-xl transition-all active:scale-95 flex items-center gap-1 shadow-xs"
               >
                 <span className="material-symbols-outlined text-[18px]">add</span>
                 <span>Add</span>
@@ -260,7 +299,10 @@ export const QuestDetailModal: React.FC<QuestDetailModalProps> = ({
             </button>
             <button
               onClick={handleCompleteAndFinish}
-              className="px-5 py-2.5 text-sm font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 bg-[#725477] text-white hover:bg-[#593d5f]"
+              style={{
+                backgroundColor: 'var(--theme-primary)',
+              }}
+              className="px-5 py-2.5 text-sm font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 text-white hover:opacity-90"
             >
               <span className="material-symbols-outlined text-[18px]">
                 check_circle

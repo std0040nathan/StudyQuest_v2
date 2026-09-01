@@ -33,7 +33,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [school, setSchool] = useState('Bina Bangsa School');
-  const [grade, setGrade] = useState('Grade 10');
+  const [grade, setGrade] = useState('Grade 5');
   const [password, setPassword] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
 
@@ -41,48 +41,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Quick One-Click Demo Student Login
-  const handleQuickDemoLogin = () => {
-    setIsLoading(true);
-    setErrorMsg('');
-
-    setTimeout(() => {
-      // Find existing demo or create Nathan's profile
-      const demoAccount: UserAccount = existingAccounts.find(
-        (acc) => acc.email.toLowerCase() === 'std0040.nathan@binabangsaschool.com'
-      ) || {
-        id: 'user-demo-nathan',
-        name: 'Nathan',
-        email: 'std0040.nathan@binabangsaschool.com',
-        school: 'Bina Bangsa School',
-        grade: 'Secondary 4 / Grade 10',
-        avatarIcon: 'school',
-        avatarColor: 'bg-[#e0bbe4] text-[#725477]',
-        stats: {
-          name: 'Nathan',
-          title: 'Novice Scholar',
-          level: 1,
-          xp: 0,
-          xpToNextLevel: 500,
-          streak: 1,
-          completedQuestsCount: 0,
-        },
-        quests: [],
-        createdAt: new Date().toISOString(),
-      };
-
-      confetti({
-        particleCount: 60,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: ['#725477', '#e0bbe4', '#b1cdfd', '#FFF5BA', '#9ad5a2'],
-      });
-
-      setIsLoading(false);
-      onLoginSuccess(demoAccount);
-    }, 400);
-  };
 
   // Handle Sign In submission
   const handleSignIn = (e: React.FormEvent) => {
@@ -120,7 +78,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           name: formattedName,
           email: loginEmail.trim(),
           school: 'Bina Bangsa School',
-          grade: 'Grade 10',
+          grade: 'Grade 5',
           avatarIcon: 'school',
           avatarColor: 'bg-[#e0bbe4] text-[#725477]',
           stats: {
@@ -252,27 +210,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
         {/* Form Body */}
         <div className="p-6 sm:p-8 pt-6">
-          {/* Quick Demo One-Click Login Button */}
-          <button
-            type="button"
-            onClick={handleQuickDemoLogin}
-            disabled={isLoading}
-            className="w-full mb-5 py-3 px-4 rounded-2xl border-2 border-[#e0bbe4] bg-[#e0bbe4]/20 hover:bg-[#e0bbe4]/35 text-[#725477] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-98 shadow-xs"
-          >
-            <span className="material-symbols-outlined text-[20px] text-yellow-600">
-              bolt
-            </span>
-            <span>Instant Student Demo Login (Nathan)</span>
-          </button>
-
-          <div className="relative flex py-2 items-center mb-4">
-            <div className="flex-grow border-t border-[#eeedef]"></div>
-            <span className="flex-shrink mx-3 text-[11px] font-bold uppercase tracking-wider text-[#4c444c]/60">
-              Or sign in with credentials
-            </span>
-            <div className="flex-grow border-t border-[#eeedef]"></div>
-          </div>
-
           {errorMsg && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">error</span>
@@ -295,7 +232,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="std0040.nathan@binabangsaschool.com"
+                    placeholder="student@school.edu"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-sm text-[#1a1c1d] font-medium transition-all"
                   />
                 </div>
@@ -306,8 +243,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   <label className="block text-xs font-bold text-[#1a1c1d]">
                     Password or PIN
                   </label>
-                  <span className="text-[11px] text-[#725477] font-semibold">
-                    (Optional for demo)
+                  <span className="text-[11px] text-[#4c444c]/70 font-medium">
+                    (Optional)
                   </span>
                 </div>
                 <div className="relative">
@@ -402,7 +339,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     type="text"
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
-                    placeholder="Secondary 4 / Grade 10"
+                    placeholder="Grade 5 / Grade 6"
                     className="w-full px-3 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] text-xs text-[#1a1c1d] font-medium"
                   />
                 </div>
@@ -410,7 +347,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
               {/* Quick Grade chips */}
               <div className="flex flex-wrap gap-1.5">
-                {['Sec 1 (Gr 7)', 'Sec 2 (Gr 8)', 'Sec 3 (Gr 9)', 'Sec 4 (Gr 10)', 'Grade 11', 'Grade 12', 'JC 1', 'JC 2'].map((gPreset) => (
+                {['Grade 5', 'Grade 6', 'Primary 5', 'Primary 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'].map((gPreset) => (
                   <button
                     key={gPreset}
                     type="button"

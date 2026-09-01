@@ -73,7 +73,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
 
           <h3 className="text-xl font-bold text-[#1a1c1d]">{userStats.name}</h3>
-          <p className="text-xs font-semibold text-[#725477] mt-0.5">
+          <p
+            style={{ color: 'var(--theme-primary)' }}
+            className="text-xs font-semibold mt-0.5"
+          >
             {currentAccount?.grade || 'Scholar'} • {currentAccount?.school || 'Bina Bangsa School'}
           </p>
           {currentAccount?.email && (
@@ -87,8 +90,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </div>
             <div className="w-full h-2.5 bg-white rounded-full overflow-hidden shadow-inner">
               <div
-                className="h-full bg-[#725477] rounded-full"
-                style={{ width: `${Math.min(100, (userStats.xp / userStats.xpToNextLevel) * 100)}%` }}
+                style={{
+                  width: `${Math.min(100, (userStats.xp / userStats.xpToNextLevel) * 100)}%`,
+                  backgroundColor: 'var(--theme-primary)',
+                }}
+                className="h-full rounded-full transition-all duration-500"
               />
             </div>
           </div>
@@ -98,7 +104,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="p-3 bg-[#faf9fb] rounded-xl border border-[#eeedef]">
-              <div className="text-xl font-bold text-[#725477]">{userStats.streak}</div>
+              <div
+                style={{ color: 'var(--theme-primary)' }}
+                className="text-xl font-bold"
+              >
+                {userStats.streak}
+              </div>
               <div className="text-[11px] font-semibold text-[#4c444c]">Day Streak</div>
             </div>
             <div className="p-3 bg-[#faf9fb] rounded-xl border border-[#eeedef]">
@@ -145,7 +156,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   onClose();
                   onOpenSettings();
                 }}
-                className="px-3 py-2 text-xs font-bold text-[#725477] hover:bg-[#e0bbe4]/25 rounded-xl transition-all flex items-center gap-1"
+                style={{ color: 'var(--theme-primary)' }}
+                className="px-3 py-2 text-xs font-bold hover:bg-black/5 rounded-xl transition-all flex items-center gap-1"
               >
                 <span className="material-symbols-outlined text-[16px]">settings</span>
                 <span>Settings</span>
@@ -158,7 +170,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   onClose();
                   onSwitchAccount();
                 }}
-                className="px-3 py-2 text-xs font-bold text-[#4c444c] hover:bg-[#e0bbe4]/25 rounded-xl transition-all flex items-center gap-1"
+                className="px-3 py-2 text-xs font-bold text-[#4c444c] hover:bg-black/5 rounded-xl transition-all flex items-center gap-1"
               >
                 <span className="material-symbols-outlined text-[16px]">switch_account</span>
                 <span>Switch</span>
@@ -181,7 +193,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-[#725477] text-white text-xs font-bold rounded-xl hover:bg-[#593d5f] transition-all"
+            style={{
+              backgroundColor: 'var(--theme-primary)',
+            }}
+            className="px-4 py-2 text-white text-xs font-bold rounded-xl hover:opacity-90 transition-all"
           >
             Done
           </button>

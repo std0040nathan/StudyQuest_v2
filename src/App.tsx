@@ -17,16 +17,17 @@ import { XpToast, XpToastInfo } from './components/XpToast';
 import { INITIAL_QUESTS, INITIAL_USER_STATS } from './data/initialQuests';
 import { Quest, UserStats, UserAccount, AppSettings } from './types';
 import { playTaskCompleteSound, setSoundEffectsEnabled } from './utils/audio';
+import { applyThemeToDocument } from './utils/theme';
 
 const STORAGE_KEY_ACCOUNTS = 'studyquest_accounts_v5';
 const STORAGE_KEY_ACTIVE_USER_ID = 'studyquest_active_user_id_v5';
 const STORAGE_KEY_SETTINGS = 'studyquest_settings_v5';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  age: 16,
-  grade: 'Secondary 4 / Grade 10',
+  age: 11,
+  grade: 'Grade 5',
   school: 'Bina Bangsa School',
-  dailyStudyGoalHours: 3,
+  dailyStudyGoalHours: 2,
   lowPowerMode: false,
   enableAnimations: true,
   enableConfetti: true,
@@ -64,18 +65,26 @@ const getTitleForLevel = (level: number) => {
   return LEVEL_TITLES[idx];
 };
 
-const DEFAULT_DEMO_ACCOUNT: UserAccount = {
-  id: 'user-demo-nathan',
+const DEFAULT_INITIAL_ACCOUNT: UserAccount = {
+  id: 'user-nathan-scholar',
   name: 'Nathan',
-  email: 'std0040.nathan@binabangsaschool.com',
-  age: 16,
+  email: 'scholar@studyquest.edu',
+  age: 11,
   school: 'Bina Bangsa School',
-  grade: 'Secondary 4 / Grade 10',
+  grade: 'Grade 5',
   avatarIcon: 'school',
   avatarColor: 'bg-[#e0bbe4] text-[#725477]',
   stats: INITIAL_USER_STATS,
   quests: INITIAL_QUESTS,
   createdAt: new Date().toISOString(),
+};
+
+// Helper to sanitize any accidental personal email in local storage
+const sanitizeAccount = (account: UserAccount): UserAccount => {
+  if (account.email && account.email.includes('std0040.nathan')) {
+    return { ...account, email: 'scholar@studyquest.edu' };
+  }
+  return account;
 };
 
 export default function App() {
@@ -85,12 +94,14 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(sanitizeAccount);
+        }
       }
     } catch (e) {
       console.error('Failed to parse accounts', e);
     }
-    return [DEFAULT_DEMO_ACCOUNT];
+    return [DEFAULT_INITIAL_ACCOUNT];
   });
 
   // Current active user account
@@ -103,15 +114,15 @@ export default function App() {
         if (Array.isArray(parsed)) {
           if (activeId) {
             const found = parsed.find((a: UserAccount) => a.id === activeId);
-            if (found) return found;
+            if (found) return sanitizeAccount(found);
           }
-          if (parsed.length > 0) return parsed[0];
+          if (parsed.length > 0) return sanitizeAccount(parsed[0]);
         }
       }
     } catch (e) {
       console.error('Failed to load active account', e);
     }
-    return DEFAULT_DEMO_ACCOUNT;
+    return DEFAULT_INITIAL_ACCOUNT;
   });
 
   // Settings state in localStorage
@@ -163,6 +174,15 @@ export default function App() {
   useEffect(() => {
     setSoundEffectsEnabled(settings.enableSoundEffects);
   }, [settings.enableSoundEffects]);
+
+  // Apply dynamic color theme whenever active user's avatarColor changes
+  useEffect(() => {
+    if (currentAccount?.avatarColor) {
+      applyThemeToDocument(currentAccount.avatarColor);
+    } else {
+      applyThemeToDocument('bg-[#e0bbe4] text-[#725477]');
+    }
+  }, [currentAccount?.avatarColor]);
 
   // Save settings to localStorage
   useEffect(() => {

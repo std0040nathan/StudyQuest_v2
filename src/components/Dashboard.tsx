@@ -86,13 +86,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           {/* Real-time Time Tracker pill */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#e0bbe4]/50 shadow-xs text-xs font-bold text-[#725477]">
+            <div
+              style={{
+                borderColor: 'var(--theme-subtle-border)',
+                color: 'var(--theme-primary)',
+              }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border shadow-xs text-xs font-bold"
+            >
               <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
               <span className="material-symbols-outlined text-[16px]">schedule</span>
               <span>{formattedLiveDate} • {formattedLiveTime}</span>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#e0bbe4]/25 border border-[#e0bbe4]/50 text-xs font-bold text-[#725477]">
+            <div
+              style={{
+                backgroundColor: 'var(--theme-subtle)',
+                borderColor: 'var(--theme-subtle-border)',
+                color: 'var(--theme-primary)',
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold"
+            >
               <span className="material-symbols-outlined text-[16px] text-yellow-600">
                 bolt
               </span>
@@ -103,7 +116,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Today's Quests 3-Column Grid */}
         {todayQuests.length === 0 ? (
-          <div className="p-8 rounded-3xl bg-white/80 border border-[#e0bbe4]/30 text-center flex flex-col items-center justify-center shadow-xs">
+          <div
+            style={{
+              borderColor: 'var(--theme-subtle-border)',
+            }}
+            className="p-8 rounded-3xl bg-white/80 border text-center flex flex-col items-center justify-center shadow-xs"
+          >
             <div className="w-16 h-16 rounded-full bg-[#b5f1bc]/40 text-[#18512a] flex items-center justify-center mb-3">
               <span className="material-symbols-outlined text-[32px]">
                 {quests.length === 0 ? 'add_task' : 'task_alt'}
@@ -120,7 +138,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {onNavigateCreateQuest && (
               <button
                 onClick={onNavigateCreateQuest}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs bg-[#725477] text-white hover:bg-[#593d5f] flex items-center gap-2"
+                style={{
+                  backgroundColor: 'var(--theme-primary)',
+                }}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs text-white hover:opacity-90 flex items-center gap-2"
               >
                 <span className="material-symbols-outlined text-[18px]">add_circle</span>
                 <span>Hatch New Quest</span>
@@ -166,13 +187,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 ? 'text-[#445f89]'
                 : isTest
                 ? 'text-yellow-700'
-                : 'text-[#725477]';
+                : 'text-theme-primary';
 
               return (
                 <div
                   key={quest.id}
                   id={`quest-card-${quest.id}`}
-                  className="bg-white rounded-2xl p-6 relative overflow-hidden transition-all duration-300 border border-[#e0bbe4]/25 shadow-[0_8px_30px_rgba(114,84,119,0.08)] hover:-translate-y-1 hover:shadow-[0_12px_35px_rgba(114,84,119,0.12)] flex flex-col justify-between"
+                  style={{
+                    borderColor: 'var(--theme-subtle-border)',
+                  }}
+                  className="bg-white rounded-2xl p-6 relative overflow-hidden transition-all duration-300 border shadow-xs hover:-translate-y-1 hover:shadow-md flex flex-col justify-between"
                 >
                   {/* Accent vertical bar on left edge */}
                   <div className={`absolute left-0 top-0 bottom-0 w-2.5 ${accentBorderColor}`} />
@@ -184,7 +208,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <span className={`px-3 py-0.5 rounded-full text-xs font-bold tracking-wide ${badgeStyle}`}>
                           {quest.subject}
                         </span>
-                        <span className="text-[11px] font-bold text-[#725477] bg-[#e0bbe4]/20 px-2 py-0.5 rounded-md">
+                        <span
+                          style={{
+                            backgroundColor: 'var(--theme-subtle)',
+                            color: 'var(--theme-primary)',
+                          }}
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                        >
                           +{quest.xpReward || 100} EXP
                         </span>
                       </div>
@@ -241,7 +271,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <h3
                         onClick={() => onOpenQuestModal(quest)}
-                        className="text-xl font-bold cursor-pointer hover:text-[#725477] transition-colors leading-tight text-[#1a1c1d]"
+                        className="text-xl font-bold cursor-pointer hover:underline transition-colors leading-tight text-[#1a1c1d]"
                       >
                         {quest.title}
                       </h3>
@@ -267,7 +297,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               type="checkbox"
                               checked={st.completed}
                               onChange={() => {}} // handled by wrapper click
-                              className="w-4 h-4 rounded text-[#725477] accent-[#725477] cursor-pointer pointer-events-none transition-transform group-hover/step:scale-110"
+                              style={{
+                                accentColor: 'var(--theme-primary)',
+                              }}
+                              className="w-4 h-4 rounded cursor-pointer pointer-events-none transition-transform group-hover/step:scale-110"
                             />
                             <span
                               className={`truncate ${
@@ -308,7 +341,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <button
                       onClick={() => onCompleteAndRemoveQuest(quest.id)}
                       id={`btn-finish-quest-${quest.id}`}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all active:scale-98 flex items-center justify-center gap-1.5 shadow-xs bg-[#725477] text-white hover:bg-[#593d5f]"
+                      style={{
+                        backgroundColor: 'var(--theme-primary)',
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all active:scale-98 flex items-center justify-center gap-1.5 shadow-xs text-white hover:opacity-90"
                     >
                       <span className="material-symbols-outlined text-[16px]">
                         task_alt
@@ -329,7 +365,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-2xl font-bold text-[#1a1c1d] tracking-tight">
                 Upcoming Deadlines
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#e0bbe4]/30 text-xs font-bold text-[#725477]">
+              <span
+                style={{
+                  backgroundColor: 'var(--theme-subtle)',
+                  borderColor: 'var(--theme-subtle-border)',
+                  color: 'var(--theme-primary)',
+                }}
+                className="px-2.5 py-0.5 rounded-full border text-xs font-bold"
+              >
                 {sortedUpcomingQuests.length} Tracked
               </span>
             </div>
@@ -340,7 +383,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <button
             id="btn-view-calendar"
             onClick={onOpenCalendar}
-            className="text-[#725477] text-sm font-bold hover:underline flex items-center gap-1 group transition-all"
+            style={{
+              color: 'var(--theme-primary)',
+            }}
+            className="text-sm font-bold hover:underline flex items-center gap-1 group transition-all"
           >
             <span>View Calendar</span>
             <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
@@ -352,7 +398,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Upcoming Deadlines List Card with dynamic countdowns */}
         <div
           id="upcoming-deadlines-container"
-          className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(114,84,119,0.05)] p-3 sm:p-5 border border-[#e0bbe4]/20 space-y-1.5"
+          style={{
+            borderColor: 'var(--theme-subtle-border)',
+          }}
+          className="bg-white rounded-2xl shadow-xs p-3 sm:p-5 border space-y-1.5"
         >
           {sortedUpcomingQuests.length === 0 ? (
             <div className="text-center py-6 text-sm text-[#4c444c] font-medium">
@@ -374,7 +423,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div
                   key={quest.id}
                   id={`upcoming-item-${quest.id}`}
-                  className={`flex items-center p-3.5 sm:p-4 rounded-xl group transition-all hover:bg-[#e0bbe4]/10 ${
+                  className={`flex items-center p-3.5 sm:p-4 rounded-xl group transition-all hover:bg-black/5 ${
                     urgency.isOverdue
                       ? 'bg-red-50/50 border border-red-200'
                       : urgency.isImminent
@@ -386,7 +435,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     onClick={() => onCompleteAndRemoveQuest(quest.id)}
                     title="Finish task & claim EXP"
-                    className="w-7 h-7 rounded-lg mr-3 flex items-center justify-center transition-colors shrink-0 border-2 border-[#cfc3cc] hover:border-[#725477] hover:bg-[#b5f1bc] text-transparent hover:text-[#18512a]"
+                    className="w-7 h-7 rounded-lg mr-3 flex items-center justify-center transition-colors shrink-0 border-2 border-[#cfc3cc] hover:border-theme-primary hover:bg-[#b5f1bc] text-transparent hover:text-[#18512a]"
                   >
                     <span className="material-symbols-outlined text-[16px]">check</span>
                   </button>
@@ -410,7 +459,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className="flex-1 min-w-0 pr-3 cursor-pointer"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-base font-bold truncate group-hover:text-[#725477] transition-colors text-[#1a1c1d]">
+                      <h4 className="text-base font-bold truncate group-hover:underline transition-colors text-[#1a1c1d]">
                         {quest.title}
                       </h4>
 
@@ -458,10 +507,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span className="px-3 py-1 rounded-full bg-[#eeedef] text-[#1a1c1d] text-xs font-bold hidden sm:inline-block">
                       {quest.subject}
                     </span>
-                    <span className="text-xs font-bold text-[#725477] hidden md:inline-block">
+                    <span
+                      style={{ color: 'var(--theme-primary)' }}
+                      className="text-xs font-bold hidden md:inline-block"
+                    >
                       +{quest.xpReward || 100} EXP
                     </span>
-                    <span className="material-symbols-outlined text-[#cfc3cc] group-hover:text-[#725477] group-hover:translate-x-0.5 transition-all text-[22px]">
+                    <span
+                      style={{ color: 'var(--theme-primary)' }}
+                      className="material-symbols-outlined group-hover:translate-x-0.5 transition-all text-[22px]"
+                    >
                       chevron_right
                     </span>
                   </div>

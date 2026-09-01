@@ -54,7 +54,12 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
         <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-[#fcd7ff]/60 rounded-full blur-3xl pointer-events-none" />
 
         {/* Level Icon Badge */}
-        <div className="mx-auto w-24 h-24 rounded-3xl bg-gradient-to-tr from-[#725477] to-[#9b72a0] text-white flex flex-col items-center justify-center shadow-lg shadow-[#725477]/30 mb-4 transform hover:scale-105 transition-transform">
+        <div
+          style={{
+            backgroundColor: 'var(--theme-primary)',
+          }}
+          className="mx-auto w-24 h-24 rounded-3xl text-white flex flex-col items-center justify-center shadow-lg mb-4 transform hover:scale-105 transition-transform"
+        >
           <span className="material-symbols-outlined text-[36px] text-yellow-300 animate-bounce">
             military_tech
           </span>
@@ -76,8 +81,11 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
           You Reached Level {newLevel}!
         </h3>
 
-        <p className="text-sm font-bold text-[#725477] mb-4">
-          Title Unlocked: <span className="underline decoration-wavy decoration-[#e0bbe4]">{title}</span>
+        <p
+          style={{ color: 'var(--theme-primary)' }}
+          className="text-sm font-bold mb-4"
+        >
+          Title Unlocked: <span className="underline decoration-wavy">{title}</span>
         </p>
 
         {/* Motivational Card */}
@@ -89,7 +97,10 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
         <button
           id="btn-claim-levelup"
           onClick={onClose}
-          className="w-full py-3.5 px-6 rounded-2xl bg-[#725477] hover:bg-[#593d5f] text-white text-sm font-bold transition-all shadow-md shadow-[#725477]/20 active:scale-95 flex items-center justify-center gap-2"
+          style={{
+            backgroundColor: 'var(--theme-primary)',
+          }}
+          className="w-full py-3.5 px-6 rounded-2xl text-white text-sm font-bold transition-all shadow-md hover:opacity-90 active:scale-95 flex items-center justify-center gap-2"
         >
           <span>Keep Conquering!</span>
           <span className="material-symbols-outlined text-[20px]">

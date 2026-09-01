@@ -16,18 +16,18 @@ interface SettingsModalProps {
 }
 
 const GRADE_PRESETS = [
-  { label: 'Sec 1 (Gr 7)', value: 'Secondary 1 / Grade 7', group: 'Lower Secondary' },
-  { label: 'Sec 2 (Gr 8)', value: 'Secondary 2 / Grade 8', group: 'Lower Secondary' },
-  { label: 'Sec 3 (Gr 9)', value: 'Secondary 3 / Grade 9', group: 'Upper Secondary' },
-  { label: 'Sec 4 (Gr 10)', value: 'Secondary 4 / Grade 10', group: 'Upper Secondary' },
-  { label: 'Grade 11', value: 'Grade 11 / Pre-U 1', group: 'Senior / Pre-U' },
-  { label: 'Grade 12', value: 'Grade 12 / Pre-U 2', group: 'Senior / Pre-U' },
-  { label: 'JC 1', value: 'Junior College 1 (JC1)', group: 'Junior College' },
-  { label: 'JC 2', value: 'Junior College 2 (JC2)', group: 'Junior College' },
-  { label: 'IB 1', value: 'IB Diploma Year 1', group: 'IB Diploma' },
-  { label: 'IB 2', value: 'IB Diploma Year 2', group: 'IB Diploma' },
-  { label: 'Middle School', value: 'Middle School (Grades 6-8)', group: 'Middle' },
-  { label: 'University', value: 'Undergraduate / College', group: 'Higher Ed' },
+  { label: 'Grade 5', value: 'Grade 5 / Primary 5', group: 'Primary / Elementary' },
+  { label: 'Grade 6', value: 'Grade 6 / Primary 6', group: 'Primary / Middle' },
+  { label: 'Grade 7', value: 'Grade 7 / Middle School', group: 'Middle School' },
+  { label: 'Grade 8', value: 'Grade 8 / Middle School', group: 'Middle School' },
+  { label: 'Grade 9', value: 'Grade 9 / High School', group: 'High School' },
+  { label: 'Grade 10', value: 'Grade 10 / High School', group: 'High School' },
+  { label: 'Grade 11', value: 'Grade 11 / High School', group: 'Senior High' },
+  { label: 'Grade 12', value: 'Grade 12 / Senior', group: 'Senior High' },
+  { label: 'Primary 5', value: 'Primary 5 (P5)', group: 'Primary' },
+  { label: 'Primary 6', value: 'Primary 6 (P6)', group: 'Primary' },
+  { label: 'Sec 1-2', value: 'Secondary 1-2', group: 'Secondary' },
+  { label: 'Sec 3-4', value: 'Secondary 3-4', group: 'Secondary' },
 ];
 
 const AVATAR_ICONS = [
@@ -69,6 +69,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   // Form states for Profile
   const [name, setName] = useState(currentAccount.name || '');
+  const [email, setEmail] = useState(currentAccount.email || 'scholar@studyquest.edu');
   const [age, setAge] = useState<number | ''>(currentAccount.age || 16);
   const [grade, setGrade] = useState(currentAccount.grade || 'Grade 10');
   const [school, setSchool] = useState(currentAccount.school || 'Bina Bangsa School');
@@ -95,6 +96,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setName(currentAccount.name || '');
+      setEmail(currentAccount.email || 'scholar@studyquest.edu');
       setAge(currentAccount.age !== undefined ? currentAccount.age : 16);
       setGrade(currentAccount.grade || 'Grade 10');
       setSchool(currentAccount.school || 'Bina Bangsa School');
@@ -122,6 +124,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const finalAge = age === '' ? undefined : Number(age);
     onUpdateAccount({
       name: name.trim() || currentAccount.name,
+      email: email.trim() || currentAccount.email,
       age: finalAge,
       grade: grade.trim(),
       school: school.trim(),
@@ -264,9 +267,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
+            style={activeTab === 'profile' ? { borderBottomColor: 'var(--theme-primary)', color: 'var(--theme-primary)' } : {}}
             className={`py-3 px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'profile'
-                ? 'border-[#725477] text-[#725477]'
+                ? ''
                 : 'border-transparent text-[#4c444c] hover:text-[#1a1c1d]'
             }`}
           >
@@ -277,9 +281,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('performance')}
+            style={activeTab === 'performance' ? { borderBottomColor: 'var(--theme-primary)', color: 'var(--theme-primary)' } : {}}
             className={`py-3 px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'performance'
-                ? 'border-[#725477] text-[#725477]'
+                ? ''
                 : 'border-transparent text-[#4c444c] hover:text-[#1a1c1d]'
             }`}
           >
@@ -290,9 +295,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('workflow')}
+            style={activeTab === 'workflow' ? { borderBottomColor: 'var(--theme-primary)', color: 'var(--theme-primary)' } : {}}
             className={`py-3 px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'workflow'
-                ? 'border-[#725477] text-[#725477]'
+                ? ''
                 : 'border-transparent text-[#4c444c] hover:text-[#1a1c1d]'
             }`}
           >
@@ -303,9 +309,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('data')}
+            style={activeTab === 'data' ? { borderBottomColor: 'var(--theme-primary)', color: 'var(--theme-primary)' } : {}}
             className={`py-3 px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'data'
-                ? 'border-[#725477] text-[#725477]'
+                ? ''
                 : 'border-transparent text-[#4c444c] hover:text-[#1a1c1d]'
             }`}
           >
@@ -339,11 +346,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {grade || 'Grade Unset'} • {school || 'Bina Bangsa School'}
                     {age ? ` • ${age} yrs old` : ''}
                   </p>
-                  <p className="text-[11px] text-[#4c444c] mt-0.5">{currentAccount.email}</p>
+                  <p className="text-[11px] text-[#4c444c] mt-0.5">{email || 'scholar@studyquest.edu'}</p>
                 </div>
               </div>
 
-              {/* Student Name & School Grid */}
+              {/* Student Name & Email & School Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
@@ -359,6 +366,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
+                    Student / School Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="scholar@studyquest.edu"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm font-medium"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
                     School / Institution
                   </label>
@@ -393,7 +413,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     type="text"
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
-                    placeholder="e.g. Secondary 4 / Grade 10"
+                    placeholder="e.g. Grade 5 / Primary 5"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm font-semibold text-[#1a1c1d]"
                   />
                 </div>
@@ -487,9 +507,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       key={col.label}
                       type="button"
                       onClick={() => setAvatarColor(col.class)}
+                      style={
+                        avatarColor === col.class
+                          ? { borderColor: 'var(--theme-primary)', boxShadow: '0 0 0 2px var(--theme-primary)' }
+                          : {}
+                      }
                       className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${
                         avatarColor === col.class
-                          ? 'border-[#725477] ring-2 ring-[#725477] shadow-xs'
+                          ? 'shadow-xs'
                           : 'border-[#eeedef] opacity-80 hover:opacity-100'
                       }`}
                     >
@@ -785,20 +810,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </label>
               </div>
 
-              {/* Reset to Default Quest Demo */}
+              {/* Reset to Default Quest Presets */}
               <div className="p-4 rounded-2xl bg-red-50/50 border border-red-200 flex items-center justify-between">
                 <div>
                   <h4 className="text-xs sm:text-sm font-bold text-red-900">
-                    Reset Demo Quests
+                    Restore Sample Quests
                   </h4>
                   <p className="text-xs text-red-700/80 mt-0.5">
-                    Repopulates sample school homework (Math, CS, English, Chinese) if board is empty.
+                    Repopulates sample school homework (Math, Science, English, Chinese) if board is empty.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    if (window.confirm('Reset quest board with sample school quests?')) {
+                    if (window.confirm('Restore quest board with sample school quests?')) {
                       onResetQuests();
                       setImportStatus('Reset completed with initial quest presets.');
                     }
@@ -806,7 +831,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-xs transition-all"
                 >
                   <span className="material-symbols-outlined text-[18px]">restart_alt</span>
-                  <span>Reset Board</span>
+                  <span>Restore Quests</span>
                 </button>
               </div>
             </div>
@@ -827,7 +852,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               type="button"
               onClick={handleSaveAll}
-              className="px-5 py-2.5 bg-[#725477] hover:bg-[#593d5f] text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-[#725477]/20 flex items-center gap-1.5 active:scale-98"
+              style={{
+                backgroundColor: 'var(--theme-primary)',
+              }}
+              className="px-5 py-2.5 hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center gap-1.5 active:scale-98"
             >
               <span className="material-symbols-outlined text-[18px]">save</span>
               <span>Save Changes</span>

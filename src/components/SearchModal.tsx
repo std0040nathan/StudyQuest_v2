@@ -51,7 +51,12 @@ export const SearchModal: React.FC<SearchModalProps> = ({
       >
         {/* Search Input Bar */}
         <div className="p-4 border-b border-[#eeedef] bg-[#faf9fb] flex items-center gap-3">
-          <span className="material-symbols-outlined text-[#725477] text-[24px]">search</span>
+          <span
+            style={{ color: 'var(--theme-primary)' }}
+            className="material-symbols-outlined text-[24px]"
+          >
+            search
+          </span>
           <input
             type="text"
             value={query}
@@ -72,19 +77,27 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
         {/* Subject Filter Pills */}
         <div className="px-4 py-2 bg-[#faf9fb] border-b border-[#eeedef] flex items-center gap-2 overflow-x-auto">
-          {subjects.map((sub) => (
-            <button
-              key={sub}
-              onClick={() => setSelectedSubject(sub)}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                selectedSubject === sub
-                  ? 'bg-[#725477] text-white'
-                  : 'bg-[#eeedef] text-[#4c444c] hover:bg-[#e0bbe4]/30'
-              }`}
-            >
-              {sub}
-            </button>
-          ))}
+          {subjects.map((sub) => {
+            const isSelected = selectedSubject === sub;
+            return (
+              <button
+                key={sub}
+                onClick={() => setSelectedSubject(sub)}
+                style={
+                  isSelected
+                    ? { backgroundColor: 'var(--theme-primary)', color: '#ffffff' }
+                    : {}
+                }
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                  isSelected
+                    ? 'shadow-xs'
+                    : 'bg-[#eeedef] text-[#4c444c] hover:bg-black/5'
+                }`}
+              >
+                {sub}
+              </button>
+            );
+          })}
         </div>
 
         {/* Results List */}
@@ -104,21 +117,27 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   onSelectQuest(q);
                   onClose();
                 }}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-[#faf9fb] border border-transparent hover:border-[#e0bbe4] transition-all cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-[#faf9fb] border border-transparent hover:border-theme-primary transition-all cursor-pointer group"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#e0bbe4]/30 text-[#66496b]">
+                    <span
+                      style={{
+                        backgroundColor: 'var(--theme-subtle)',
+                        color: 'var(--theme-primary)',
+                      }}
+                      className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                    >
                       {q.type}
                     </span>
                     <span className="text-[11px] font-semibold text-[#4c444c]">{q.subject}</span>
                   </div>
-                  <h4 className="font-bold text-[#1a1c1d] group-hover:text-[#725477] transition-colors text-sm">
+                  <h4 className="font-bold text-[#1a1c1d] group-hover:text-theme-primary transition-colors text-sm">
                     {q.title}
                   </h4>
                   <p className="text-xs text-[#4c444c]/80 line-clamp-1">{q.details}</p>
                 </div>
-                <span className="material-symbols-outlined text-[#cfc3cc] group-hover:text-[#725477]">
+                <span className="material-symbols-outlined text-[#cfc3cc] group-hover:text-theme-primary">
                   arrow_forward
                 </span>
               </div>

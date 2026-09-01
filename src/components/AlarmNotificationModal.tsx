@@ -63,7 +63,13 @@ export const AlarmNotificationModal: React.FC<AlarmNotificationModalProps> = ({
           <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#eeedef] text-[#4c444c]">
             {quest.subject}
           </span>
-          <span className="text-xs font-semibold text-[#725477] bg-[#e0bbe4]/25 px-2 py-0.5 rounded-md">
+          <span
+            style={{
+              backgroundColor: 'var(--theme-subtle)',
+              color: 'var(--theme-primary)',
+            }}
+            className="text-xs font-semibold px-2 py-0.5 rounded-md"
+          >
             Due {quest.deadlineFormatted || quest.deadline} {quest.deadlineTimeFormatted && `at ${quest.deadlineTimeFormatted}`}
           </span>
         </div>
@@ -85,7 +91,10 @@ export const AlarmNotificationModal: React.FC<AlarmNotificationModalProps> = ({
               onCompleteQuest(quest.id);
               onDismiss();
             }}
-            className="py-3 px-4 rounded-xl bg-[#725477] hover:bg-[#593d5f] text-white text-xs font-bold transition-all shadow-md shadow-[#725477]/20 active:scale-95 flex items-center justify-center gap-1.5"
+            style={{
+              backgroundColor: 'var(--theme-primary)',
+            }}
+            className="py-3 px-4 rounded-xl text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 hover:opacity-90"
           >
             <span className="material-symbols-outlined text-[16px]">check_circle</span>
             <span>Finish Task (+XP)</span>

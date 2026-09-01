@@ -41,12 +41,21 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-[#eeedef] bg-[#faf9fb] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#725477] text-[20px]">
+            <span
+              style={{ color: 'var(--theme-primary)' }}
+              className="material-symbols-outlined text-[20px]"
+            >
               notifications_active
             </span>
             <h3 className="font-bold text-[#1a1c1d] text-base">Study Quests & Deadlines</h3>
           </div>
-          <span className="text-xs font-bold text-[#725477] bg-[#e0bbe4]/40 px-2 py-0.5 rounded-full">
+          <span
+            style={{
+              backgroundColor: 'var(--theme-subtle)',
+              color: 'var(--theme-primary)',
+            }}
+            className="text-xs font-bold px-2 py-0.5 rounded-full"
+          >
             {sortedUpcoming.length} Active
           </span>
         </div>
@@ -75,7 +84,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   onSelectQuest(q);
                   onClose();
                 }}
-                className={`p-3 rounded-xl hover:bg-[#e0bbe4]/20 border transition-all cursor-pointer group ${
+                className={`p-3 rounded-xl hover:bg-black/5 border transition-all cursor-pointer group ${
                   urgency.isOverdue
                     ? 'bg-red-50/70 border-red-200'
                     : urgency.isImminent
@@ -85,12 +94,17 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               >
                 <div className="flex items-center justify-between mb-1">
                   <span
+                    style={
+                      !urgency.isOverdue && !urgency.isUrgent
+                        ? { color: 'var(--theme-primary)' }
+                        : {}
+                    }
                     className={`text-[11px] font-bold flex items-center gap-1 ${
                       urgency.isOverdue
                         ? 'text-red-700 font-black'
                         : urgency.isUrgent
                         ? 'text-amber-800'
-                        : 'text-[#725477]'
+                        : ''
                     }`}
                   >
                     <span className="material-symbols-outlined text-[13px]">
@@ -98,11 +112,14 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                     </span>
                     {urgency.humanRemaining}
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#725477]">
+                  <span
+                    style={{ color: 'var(--theme-primary)' }}
+                    className="text-[10px] font-bold uppercase tracking-wider"
+                  >
                     {q.subject}
                   </span>
                 </div>
-                <h4 className="font-bold text-xs text-[#1a1c1d] group-hover:text-[#725477] truncate">
+                <h4 className="font-bold text-xs text-[#1a1c1d] group-hover:text-theme-primary truncate">
                   {q.title}
                 </h4>
                 <p className="text-[11px] text-[#4c444c] truncate mt-0.5">
@@ -116,7 +133,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         <div className="p-3 border-t border-[#eeedef] bg-[#faf9fb] text-center">
           <button
             onClick={onClose}
-            className="text-xs font-bold text-[#725477] hover:underline"
+            style={{ color: 'var(--theme-primary)' }}
+            className="text-xs font-bold hover:underline"
           >
             Close
           </button>

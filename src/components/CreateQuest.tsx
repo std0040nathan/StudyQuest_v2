@@ -216,8 +216,20 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
           <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-[#dfbbe4]/30 rounded-full blur-3xl pointer-events-none" />
 
           {/* Fun Top Right Badge */}
-          <div className="absolute top-8 right-8 hidden sm:flex items-center gap-1.5 px-4 py-1.5 bg-[#e0bbe4]/30 rounded-full text-[#66496b] border border-[#e0bbe4]/50 shadow-xs">
-            <span className="material-symbols-outlined text-[18px] text-[#725477]">stars</span>
+          <div
+            style={{
+              backgroundColor: 'var(--theme-subtle)',
+              borderColor: 'var(--theme-subtle-border)',
+              color: 'var(--theme-primary)',
+            }}
+            className="absolute top-8 right-8 hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-full border shadow-xs"
+          >
+            <span
+              style={{ color: 'var(--theme-primary)' }}
+              className="material-symbols-outlined text-[18px]"
+            >
+              stars
+            </span>
             <span className="text-xs font-bold">+150 EXP on Finish!</span>
           </div>
 
@@ -237,12 +249,12 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
             <div className="flex flex-col gap-2 group">
               <label
                 htmlFor="subject"
-                className="text-xs font-bold text-[#4c444c] group-focus-within:text-[#725477] transition-colors"
+                className="text-xs font-bold text-[#4c444c] group-focus-within:text-theme-primary transition-colors"
               >
                 Task Title / Assignment Name
               </label>
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#4c444c]/50 group-focus-within:text-[#725477] transition-colors text-[20px]">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#4c444c]/50 group-focus-within:text-theme-primary transition-colors text-[20px]">
                   edit_note
                 </span>
                 <input
@@ -253,18 +265,27 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
                   value={missionTitle}
                   onChange={(e) => setMissionTitle(e.target.value)}
                   placeholder="e.g. Chapter 4 Math Exercises, CS Coding Lab..."
-                  className="w-full h-12 pl-12 pr-4 rounded-xl bg-[#f4f3f5] text-[#1a1c1d] text-base font-medium focus:outline-none focus:ring-2 focus:ring-[#725477]/40 focus:bg-white transition-all shadow-xs placeholder:text-[#4c444c]/40 border border-transparent focus:border-[#e0bbe4]"
+                  className="w-full h-12 pl-12 pr-4 rounded-xl bg-[#f4f3f5] text-[#1a1c1d] text-base font-medium focus:outline-none focus:ring-2 focus:ring-theme-primary/40 focus:bg-white transition-all shadow-xs placeholder:text-[#4c444c]/40 border border-transparent focus:border-theme-primary"
                 />
               </div>
 
               {/* School Subjects Selector */}
               <div className="flex flex-col gap-2 pt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#725477]">
+                  <span
+                    style={{ color: 'var(--theme-primary)' }}
+                    className="text-xs font-bold"
+                  >
                     Select School Subject:
                   </span>
                   {subject === 'Other' && (
-                    <span className="text-[11px] font-semibold text-[#725477] bg-[#e0bbe4]/30 px-2.5 py-0.5 rounded-full">
+                    <span
+                      style={{
+                        backgroundColor: 'var(--theme-subtle)',
+                        color: 'var(--theme-primary)',
+                      }}
+                      className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                    >
                       Custom Subject Mode
                     </span>
                   )}
@@ -284,14 +305,15 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
                             setCustomSubject('');
                           }
                         }}
+                        style={
+                          isSelected
+                            ? { backgroundColor: 'var(--theme-primary)', color: '#ffffff' }
+                            : {}
+                        }
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 ${
                           isSelected
-                            ? isOther
-                              ? 'bg-[#725477] text-white ring-2 ring-[#e0bbe4]'
-                              : 'bg-[#725477] text-white shadow-md'
-                            : isOther
-                            ? 'bg-[#e0bbe4]/40 text-[#725477] border border-[#e0bbe4] hover:bg-[#e0bbe4]/60'
-                            : 'bg-[#eeedef] text-[#4c444c] hover:bg-[#e0bbe4]/30 hover:text-[#725477]'
+                            ? 'shadow-md'
+                            : 'bg-[#eeedef] text-[#4c444c] hover:bg-black/5'
                         }`}
                       >
                         {isOther && (
@@ -307,13 +329,24 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
 
                 {/* Custom "Other" Subject Input Box & Quick Elective Suggestions */}
                 {subject === 'Other' && (
-                  <div className="mt-2 p-3.5 rounded-2xl bg-[#faf9fb] border border-[#e0bbe4] space-y-3 animate-fadeIn">
+                  <div
+                    style={{
+                      borderColor: 'var(--theme-subtle-border)',
+                    }}
+                    className="mt-2 p-3.5 rounded-2xl bg-[#faf9fb] border space-y-3 animate-fadeIn"
+                  >
                     <div>
-                      <label className="block text-xs font-bold text-[#725477] mb-1">
+                      <label
+                        style={{ color: 'var(--theme-primary)' }}
+                        className="block text-xs font-bold mb-1"
+                      >
                         Enter Custom Subject Name:
                       </label>
                       <div className="relative">
-                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#725477] text-[18px]">
+                        <span
+                          style={{ color: 'var(--theme-primary)' }}
+                          className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px]"
+                        >
                           auto_awesome
                         </span>
                         <input
@@ -322,7 +355,7 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
                           value={customSubject}
                           onChange={(e) => setCustomSubject(e.target.value)}
                           placeholder="e.g. Psychology, Accounting, Robotics, Biology..."
-                          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/40 outline-none text-xs sm:text-sm text-[#1a1c1d] font-semibold transition-all shadow-xs"
+                          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#eeedef] focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/30 outline-none text-xs sm:text-sm text-[#1a1c1d] font-semibold transition-all shadow-xs"
                         />
                       </div>
                     </div>
@@ -338,10 +371,15 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
                             type="button"
                             key={popSub}
                             onClick={() => setCustomSubject(popSub)}
+                            style={
+                              customSubject.toLowerCase() === popSub.toLowerCase()
+                                ? { backgroundColor: 'var(--theme-primary)', color: '#ffffff' }
+                                : {}
+                            }
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
                               customSubject.toLowerCase() === popSub.toLowerCase()
-                                ? 'bg-[#725477] text-white font-bold shadow-xs'
-                                : 'bg-white text-[#4c444c] border border-[#eeedef] hover:bg-[#e0bbe4]/25 hover:text-[#725477]'
+                                ? 'font-bold shadow-xs'
+                                : 'bg-white text-[#4c444c] border border-[#eeedef] hover:bg-black/5'
                             }`}
                           >
                             + {popSub}
@@ -358,7 +396,7 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
             <div className="flex flex-col gap-2 group">
               <label
                 htmlFor="tor"
-                className="text-xs font-bold text-[#4c444c] group-focus-within:text-[#725477] transition-colors"
+                className="text-xs font-bold text-[#4c444c] group-focus-within:text-theme-primary transition-colors"
               >
                 Quest Category / Type
               </label>
@@ -368,10 +406,15 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
                     type="button"
                     key={t}
                     onClick={() => setQuestType(t)}
-                    className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all ${
+                    style={
                       questType === t
-                        ? 'bg-[#e0bbe4] text-[#66496b] shadow-xs'
-                        : 'bg-[#eeedef] text-[#4c444c] hover:bg-[#e0bbe4]/20'
+                        ? { backgroundColor: 'var(--theme-subtle)', color: 'var(--theme-primary)', borderColor: 'var(--theme-subtle-border)' }
+                        : {}
+                    }
+                    className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all border ${
+                      questType === t
+                        ? 'shadow-xs font-bold'
+                        : 'bg-[#eeedef] text-[#4c444c] border-transparent hover:bg-black/5'
                     }`}
                   >
                     {t}
@@ -593,12 +636,19 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
                 id="btn-submit-quest"
                 type="submit"
                 disabled={isSubmitting}
-                className={`flex items-center gap-2 px-10 py-3.5 rounded-full transition-all duration-200 shadow-md font-bold text-sm tracking-wide active:scale-95 ${
+                style={
+                  submitSuccess
+                    ? {}
+                    : isSubmitting
+                    ? { backgroundColor: 'var(--theme-primary)', opacity: 0.8 }
+                    : { backgroundColor: 'var(--theme-primary)' }
+                }
+                className={`flex items-center gap-2 px-10 py-3.5 rounded-full transition-all duration-200 shadow-md font-bold text-sm tracking-wide active:scale-95 text-white ${
                   submitSuccess
                     ? 'bg-[#9ad5a2] text-[#265e35]'
                     : isSubmitting
-                    ? 'bg-[#e0bbe4] text-[#66496b] opacity-80 cursor-wait'
-                    : 'bg-[#e0bbe4] text-[#66496b] hover:bg-[#dfbbe4] hover:shadow-lg hover:shadow-[#725477]/20 hover:-translate-y-0.5'
+                    ? 'cursor-wait'
+                    : 'hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5'
                 }`}
               >
                 {submitSuccess ? (

@@ -48,10 +48,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <div className="px-8 py-10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#725477] text-[32px] animate-pulse">
+            <span
+              className="material-symbols-outlined text-[32px] animate-pulse"
+              style={{ color: 'var(--theme-primary)' }}
+            >
               auto_awesome
             </span>
-            <span className="font-['Quicksand'] font-bold text-2xl text-[#725477] tracking-tight">
+            <span
+              className="font-['Quicksand'] font-bold text-2xl tracking-tight"
+              style={{ color: 'var(--theme-primary)' }}
+            >
               StudyQuest
             </span>
           </div>
@@ -71,10 +77,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             id="nav-btn-dashboard"
             onClick={() => handleTabClick('dashboard')}
+            style={
+              currentTab === 'dashboard'
+                ? {
+                    backgroundColor: 'var(--theme-soft)',
+                    color: 'var(--theme-text-dark)',
+                    boxShadow: '0 4px 20px var(--theme-shadow)',
+                  }
+                : undefined
+            }
             className={`w-full flex items-center px-6 py-4 rounded-xl transition-all duration-200 group text-left ${
               currentTab === 'dashboard'
-                ? 'bg-[#e0bbe4] text-[#66496b] shadow-[0_4px_20px_rgba(114,84,119,0.15)] font-semibold'
-                : 'text-[#4c444c] hover:bg-[#e0bbe4]/30 hover:text-[#725477] font-medium'
+                ? 'font-bold'
+                : 'text-[#4c444c] hover:bg-black/5 font-medium'
             }`}
           >
             <span className="material-symbols-outlined mr-5 text-[22px] transition-transform group-active:scale-95">
@@ -87,10 +102,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             id="nav-btn-create-quest"
             onClick={() => handleTabClick('create-new-quest')}
+            style={
+              currentTab === 'create-new-quest'
+                ? {
+                    backgroundColor: 'var(--theme-soft)',
+                    color: 'var(--theme-text-dark)',
+                    boxShadow: '0 4px 20px var(--theme-shadow)',
+                  }
+                : undefined
+            }
             className={`w-full flex items-center px-6 py-4 rounded-xl transition-all duration-200 group text-left ${
               currentTab === 'create-new-quest'
-                ? 'bg-[#e0bbe4] text-[#66496b] shadow-[0_4px_20px_rgba(114,84,119,0.15)] font-semibold'
-                : 'text-[#4c444c] hover:bg-[#e0bbe4]/30 hover:text-[#725477] font-medium'
+                ? 'font-bold'
+                : 'text-[#4c444c] hover:bg-black/5 font-medium'
             }`}
           >
             <span className="material-symbols-outlined mr-5 text-[22px] transition-transform group-active:scale-95">
@@ -107,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onOpenSettings();
                 if (onCloseMobile) onCloseMobile();
               }}
-              className="w-full flex items-center px-6 py-4 rounded-xl transition-all duration-200 group text-left text-[#4c444c] hover:bg-[#e0bbe4]/30 hover:text-[#725477] font-medium"
+              className="w-full flex items-center px-6 py-4 rounded-xl transition-all duration-200 group text-left text-[#4c444c] hover:bg-black/5 font-medium"
             >
               <span className="material-symbols-outlined mr-5 text-[22px] transition-transform group-active:scale-95">
                 settings
@@ -122,24 +146,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div
             id="user-status-card"
             onClick={onOpenProfile}
-            className="p-4 rounded-2xl bg-[#e0bbe4]/35 border border-[#e0bbe4]/50 shadow-sm flex flex-col gap-2.5 transition-all hover:bg-[#e0bbe4]/50 cursor-pointer group/user"
+            style={{
+              backgroundColor: 'var(--theme-subtle)',
+              borderColor: 'var(--theme-subtle-border)',
+            }}
+            className="p-4 rounded-2xl border shadow-xs flex flex-col gap-2.5 transition-all hover:opacity-90 cursor-pointer group/user"
             title="Click to view full student profile"
           >
             <div className="flex items-center gap-3.5">
               <div
                 className={`w-9 h-9 rounded-full ${
-                  currentAccount?.avatarColor || 'bg-[#725477] text-white'
-                } flex items-center justify-center shrink-0 shadow-md shadow-[#725477]/20`}
+                  currentAccount?.avatarColor || 'bg-theme-primary text-white'
+                } flex items-center justify-center shrink-0 shadow-md`}
               >
                 <span className="material-symbols-outlined text-[19px]">
                   {currentAccount?.avatarIcon || 'person'}
                 </span>
               </div>
               <div className="overflow-hidden flex-1">
-                <p className="text-[14px] font-bold text-[#66496b] truncate group-hover/user:underline">
+                <p
+                  className="text-[14px] font-bold truncate group-hover/user:underline"
+                  style={{ color: 'var(--theme-text-dark)' }}
+                >
                   {userStats.title}
                 </p>
-                <div className="flex items-center justify-between text-[11px] text-[#66496b]/80 uppercase tracking-wider font-bold">
+                <div
+                  className="flex items-center justify-between text-[11px] uppercase tracking-wider font-bold opacity-80"
+                  style={{ color: 'var(--theme-text-dark)' }}
+                >
                   <span>Level {userStats.level}</span>
                   <span>{xpPercent}%</span>
                 </div>
@@ -147,10 +181,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {/* XP Progress Bar */}
-            <div className="w-full h-1.5 bg-white/60 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-black/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#725477] rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${xpPercent}%` }}
+                className="h-full rounded-full transition-all duration-500 ease-out"
+                style={{
+                  width: `${xpPercent}%`,
+                  backgroundColor: 'var(--theme-primary)',
+                }}
               />
             </div>
           </div>
