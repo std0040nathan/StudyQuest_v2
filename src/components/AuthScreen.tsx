@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { UserAccount, UserStats } from '../types';
+import {
+  findCloudAccountByEmailOrName,
+  saveAccountToCloud,
+  fetchAllCloudAccounts,
+} from '../utils/firebase';
 
 interface AuthScreenProps {
   onLoginSuccess: (account: UserAccount) => void;
@@ -35,75 +40,166 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [school, setSchool] = useState('Bina Bangsa School');
   const [grade, setGrade] = useState('Grade 5');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
+
+  // Combined accounts (local + cloud fetched)
+  const [allAccounts, setAllAccounts] = useState<UserAccount[]>(existingAccounts);
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
 
   // UI state
   const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Handle Sign In submission
-  const handleSignIn = (e: React.FormEvent) => {
+  // Fetch all accounts from Cloud Firestore on mount so all devices see all created accounts
+  useEffect(() => {
+    let isMounted = true;
+    const loadCloudAccounts = async () => {
+      setIsSyncingCloud(true);
+      try {
+        const cloudAccs = await fetchAllCloudAccounts();
+        if (isMounted && cloudAccs.length > 0) {
+          // Merge local & cloud accounts, preferring cloud version by ID or email
+          const map = new Map<string, UserAccount>();
+          existingAccounts.forEach((acc) => {
+            if (acc.id) map.set(acc.id, acc);
+            if (acc.email) map.set(acc.email.toLowerCase(), acc);
+          });
+          cloudAccs.forEach((acc) => {
+            if (acc.id) map.set(acc.id, acc);
+            if (acc.email) map.set(acc.email.toLowerCase(), acc);
+          });
+
+          // Unique array of accounts
+          const uniqueList: UserAccount[] = [];
+          const seenIds = new Set<string>();
+          for (const acc of map.values()) {
+            if (!seenIds.has(acc.id)) {
+              seenIds.add(acc.id);
+              uniqueList.push(acc);
+            }
+          }
+          setAllAccounts(uniqueList);
+        }
+      } catch (err) {
+        console.warn('Initial cloud accounts fetch note:', err);
+      } finally {
+        if (isMounted) setIsSyncingCloud(false);
+      }
+    };
+
+    loadCloudAccounts();
+    return () => {
+      isMounted = false;
+    };
+  }, [existingAccounts]);
+
+  // Handle Sign In submission with Cloud Firestore Multi-Device Verification
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setInfoMsg('');
 
-    if (!loginEmail.trim()) {
+    const inputVal = loginEmail.trim();
+    if (!inputVal) {
       setErrorMsg('Please enter your student email or username.');
+      return;
+    }
+
+    if (!loginPassword.trim()) {
+      setErrorMsg('Password / PIN is compulsory. Please enter your password.');
       return;
     }
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      // Find matching existing account
-      const matched = existingAccounts.find(
-        (acc) =>
-          acc.email.toLowerCase() === loginEmail.trim().toLowerCase() ||
-          acc.name.toLowerCase() === loginEmail.trim().toLowerCase()
-      );
+    try {
+      // 1. Check Cloud Firestore first for multi-device lookup
+      let targetAccount = await findCloudAccountByEmailOrName(inputVal);
 
-      if (matched) {
-        setIsLoading(false);
-        onLoginSuccess(matched);
-      } else {
-        // Auto-create/sign in student profile if first time
-        const cleanName = loginEmail.includes('@')
-          ? loginEmail.split('@')[0].replace(/[^a-zA-Z]/g, ' ').trim() || 'Student'
-          : loginEmail.trim();
-
-        const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-
-        const newStudentAccount: UserAccount = {
-          id: `user-${Date.now()}`,
-          name: formattedName,
-          email: loginEmail.trim(),
-          school: 'Bina Bangsa School',
-          grade: 'Grade 5',
-          avatarIcon: 'school',
-          avatarColor: 'bg-[#e0bbe4] text-[#725477]',
-          stats: {
-            name: formattedName,
-            title: 'Novice Scholar',
-            level: 1,
-            xp: 0,
-            xpToNextLevel: 500,
-            streak: 1,
-            completedQuestsCount: 0,
-          },
-          quests: [],
-          createdAt: new Date().toISOString(),
-        };
-
-        setIsLoading(false);
-        onLoginSuccess(newStudentAccount);
+      // 2. If not found in Cloud, check locally cached accounts
+      if (!targetAccount) {
+        targetAccount = allAccounts.find(
+          (acc) =>
+            acc.email.toLowerCase() === inputVal.toLowerCase() ||
+            acc.name.toLowerCase() === inputVal.toLowerCase()
+        ) || null;
       }
-    }, 400);
+
+      if (targetAccount) {
+        // If password is set on the account, verify it strictly
+        if (targetAccount.password) {
+          if (targetAccount.password !== loginPassword.trim()) {
+            setErrorMsg('Incorrect password or PIN for this student account.');
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          // If legacy account didn't have password, set it to the provided password
+          targetAccount.password = loginPassword.trim();
+        }
+
+        // Successfully logged in — sync to cloud to ensure latest session
+        saveAccountToCloud(targetAccount).catch(() => {});
+        setIsLoading(false);
+        onLoginSuccess(targetAccount);
+        return;
+      }
+
+      // 3. If account doesn't exist yet, create a fresh cloud-synced student profile with compulsory password
+      if (loginPassword.trim().length < 4) {
+        setErrorMsg('Password must be at least 4 characters or digits long.');
+        setIsLoading(false);
+        return;
+      }
+
+      const cleanName = inputVal.includes('@')
+        ? inputVal.split('@')[0].replace(/[^a-zA-Z]/g, ' ').trim() || 'Scholar'
+        : inputVal.trim();
+
+      const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+
+      const newStudentAccount: UserAccount = {
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        name: formattedName,
+        email: inputVal,
+        password: loginPassword.trim(),
+        school: 'Bina Bangsa School',
+        grade: 'Grade 5',
+        avatarIcon: 'school',
+        avatarColor: 'bg-[#e0bbe4] text-[#725477]',
+        stats: {
+          name: formattedName,
+          title: 'Novice Scholar',
+          level: 1,
+          xp: 0,
+          xpToNextLevel: 500,
+          streak: 1,
+          completedQuestsCount: 0,
+        },
+        quests: [],
+        createdAt: new Date().toISOString(),
+      };
+
+      // Save to Cloud Firestore so it is instantly available across all other devices
+      await saveAccountToCloud(newStudentAccount);
+
+      setIsLoading(false);
+      onLoginSuccess(newStudentAccount);
+    } catch (err) {
+      console.error('Sign in error:', err);
+      setIsLoading(false);
+      setErrorMsg('Error signing in. Please check your connection and try again.');
+    }
   };
 
-  // Handle Sign Up registration
-  const handleSignUp = (e: React.FormEvent) => {
+  // Handle Sign Up registration with Cloud Firestore persistence & Compulsory Password
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setInfoMsg('');
 
     if (!name.trim()) {
       setErrorMsg('Please enter your student name.');
@@ -111,13 +207,36 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     }
 
     if (!email.trim()) {
-      setErrorMsg('Please enter your school email.');
+      setErrorMsg('Please enter your school email or student ID.');
+      return;
+    }
+
+    if (!password.trim()) {
+      setErrorMsg('Password is compulsory. Please create a password or PIN.');
+      return;
+    }
+
+    if (password.trim().length < 4) {
+      setErrorMsg('Password must be at least 4 characters or digits.');
+      return;
+    }
+
+    if (password.trim() !== confirmPassword.trim()) {
+      setErrorMsg('Passwords do not match. Please verify your confirm password.');
       return;
     }
 
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // Check if email already registered in cloud
+      const existingInCloud = await findCloudAccountByEmailOrName(email.trim());
+      if (existingInCloud) {
+        setErrorMsg('An account with this email/name already exists. Please Sign In.');
+        setIsLoading(false);
+        return;
+      }
+
       const initialStats: UserStats = {
         name: name.trim(),
         title: 'Novice Scholar',
@@ -129,17 +248,21 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       };
 
       const newAccount: UserAccount = {
-        id: `user-${Date.now()}`,
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         name: name.trim(),
         email: email.trim(),
+        password: password.trim(),
         school: school.trim() || 'Bina Bangsa School',
-        grade: grade.trim() || 'Grade 10',
+        grade: grade.trim() || 'Grade 5',
         avatarIcon: selectedAvatar.icon,
         avatarColor: selectedAvatar.bg,
         stats: initialStats,
         quests: [],
         createdAt: new Date().toISOString(),
       };
+
+      // Save into Cloud Firestore for all devices
+      await saveAccountToCloud(newAccount);
 
       confetti({
         particleCount: 80,
@@ -150,7 +273,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
       setIsLoading(false);
       onLoginSuccess(newAccount);
-    }, 500);
+    } catch (err) {
+      console.error('Registration cloud error:', err);
+      setIsLoading(false);
+      setErrorMsg('Could not register account to cloud. Please try again.');
+    }
   };
 
   return (
@@ -217,11 +344,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             </div>
           )}
 
+          {infoMsg && (
+            <div className="mb-4 p-3 rounded-xl bg-[#d5e3ff]/40 border border-[#b1cdfd] text-[#001c3b] text-xs font-bold flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">info</span>
+              <span>{infoMsg}</span>
+            </div>
+          )}
+
           {mode === 'signin' ? (
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
-                  School Email or Student ID
+                  School Email or Student ID <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4c444c]/70 text-[20px]">
@@ -232,7 +366,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="student@school.edu"
+                    placeholder="e.g. Bobby Jr. the third or student@school.edu"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-sm text-[#1a1c1d] font-medium transition-all"
                   />
                 </div>
@@ -241,10 +375,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-[#1a1c1d]">
-                    Password or PIN
+                    Password or PIN <span className="text-red-500">*</span>
                   </label>
-                  <span className="text-[11px] text-[#4c444c]/70 font-medium">
-                    (Optional)
+                  <span className="text-[11px] text-[#725477] font-bold">
+                    Compulsory
                   </span>
                 </div>
                 <div className="relative">
@@ -253,9 +387,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   </span>
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    required
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Enter your account password or PIN"
                     className="w-full pl-10 pr-10 py-3 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-sm text-[#1a1c1d] font-medium transition-all"
                   />
                   <button
@@ -268,6 +403,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     </span>
                   </button>
                 </div>
+                <p className="text-[11px] text-[#4c444c]/70 mt-1">
+                  Required to verify your student account across devices (phone, iPad, web).
+                </p>
               </div>
 
               <div className="flex items-center justify-between text-xs pt-1">
@@ -312,7 +450,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Nathan"
+                    placeholder="e.g. Bobby Jr. the third"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-sm text-[#1a1c1d] font-medium transition-all"
                   />
                 </div>
@@ -382,6 +520,58 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
+                    Account Password / PIN <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4c444c]/70 text-[20px]">
+                      lock
+                    </span>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min. 4 characters"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm text-[#1a1c1d] font-medium"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4c444c]/70 hover:text-[#1a1c1d]"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        {showPassword ? 'visibility_off' : 'visibility'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4c444c]/70 text-[20px]">
+                      verified_user
+                    </span>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter password"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm text-[#1a1c1d] font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="text-[11px] text-[#4c444c]/70">
+                Password is compulsory to secure your account on iPad, phone, and laptop.
+              </p>
+
               {/* Scholar Avatar Picker */}
               <div>
                 <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
@@ -418,46 +608,74 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[20px]">how_to_reg</span>
-                    <span>Create Scholar Profile</span>
+                    <span>Create Cloud-Synced Profile</span>
                   </>
                 )}
               </button>
             </form>
           )}
 
-          {/* Existing profiles list if any */}
-          {existingAccounts.length > 0 && (
-            <div className="mt-6 pt-4 border-t border-[#eeedef]">
-              <p className="text-[11px] font-bold text-[#4c444c] mb-2 uppercase tracking-wider">
-                Existing Student Profiles on this Device
+          {/* Cloud Status Indicator */}
+          <div className="mt-5 px-3 py-2 bg-[#f4eff4] rounded-xl flex items-center justify-between text-xs text-[#725477]">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-green-600">cloud_done</span>
+              <span className="font-semibold text-[11px]">Multi-Device Cloud Sync Enabled</span>
+            </div>
+            {isSyncingCloud && (
+              <span className="text-[10px] text-[#4c444c] animate-pulse">Syncing...</span>
+            )}
+          </div>
+
+          {/* Existing profiles list (merged local & cloud across all devices) */}
+          {allAccounts.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-[#eeedef]">
+              <p className="text-[11px] font-bold text-[#4c444c] mb-2 uppercase tracking-wider flex items-center justify-between">
+                <span>Available Scholar Profiles</span>
+                <span className="text-[10px] lowercase font-normal text-[#725477]">
+                  {allAccounts.length} cloud/device {allAccounts.length === 1 ? 'account' : 'accounts'}
+                </span>
               </p>
-              <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                {existingAccounts.map((acc) => (
+              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                {allAccounts.map((acc) => (
                   <div
                     key={acc.id}
-                    onClick={() => onLoginSuccess(acc)}
+                    onClick={() => {
+                      setLoginEmail(acc.email || acc.name);
+                      setMode('signin');
+                      setErrorMsg('');
+                      setInfoMsg(`Selected ${acc.name}. Please enter your password or PIN to sign in.`);
+                    }}
                     className="flex items-center justify-between p-2 rounded-xl hover:bg-[#e0bbe4]/20 border border-[#eeedef] cursor-pointer transition-all group"
                   >
                     <div className="flex items-center gap-2.5">
                       <div
                         className={`w-7 h-7 rounded-full ${
                           acc.avatarColor || 'bg-[#e0bbe4] text-[#725477]'
-                        } flex items-center justify-center`}
+                        } flex items-center justify-center shadow-xs`}
                       >
                         <span className="material-symbols-outlined text-[16px]">
                           {acc.avatarIcon || 'person'}
                         </span>
                       </div>
-                      <div>
+                      <div className="text-left">
                         <p className="text-xs font-bold text-[#1a1c1d] group-hover:text-[#725477]">
                           {acc.name}
                         </p>
-                        <p className="text-[10px] text-[#4c444c]">{acc.school || acc.email}</p>
+                        <p className="text-[10px] text-[#4c444c]">
+                          {acc.grade || 'Grade 5'} • {acc.school || acc.email}
+                        </p>
                       </div>
                     </div>
-                    <span className="text-[11px] font-bold text-[#725477] bg-[#e0bbe4]/30 px-2 py-0.5 rounded-full">
-                      Level {acc.stats?.level || 1}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {acc.password && (
+                        <span className="material-symbols-outlined text-[#4c444c]/60 text-[14px]" title="Protected by Password/PIN">
+                          lock
+                        </span>
+                      )}
+                      <span className="text-[11px] font-bold text-[#725477] bg-[#e0bbe4]/30 px-2 py-0.5 rounded-full">
+                        Level {acc.stats?.level || 1}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>

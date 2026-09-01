@@ -71,6 +71,7 @@ export interface UserAccount {
   id: string;
   name: string;
   email: string;
+  password?: string;
   age?: number;
   school?: string;
   grade?: string;
@@ -80,4 +81,5 @@ export interface UserAccount {
   stats: UserStats;
   quests: Quest[];
   createdAt: string;
+  updatedAt?: string;
 }

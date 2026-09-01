@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "Account": {
+      "collection": "accounts",
+      "description": "Student user account and global stats for multi-device sync",
+      "fields": {
+        "id": { "type": "string", "description": "Unique account ID" },
+        "name": { "type": "string", "description": "Student display name" },
+        "email": { "type": "string", "description": "Student login email or username" },
+        "password": { "type": "string", "description": "Account password" },
+        "school": { "type": "string", "description": "School name" },
+        "grade": { "type": "string", "description": "Student grade" },
+        "avatarIcon": { "type": "string", "description": "Chosen avatar icon" },
+        "avatarColor": { "type": "string", "description": "Theme color class/hex" },
+        "stats": { "type": "map", "description": "EXP, Level, Streak, Completed quests" },
+        "quests": { "type": "array", "description": "List of active quests and sub-steps" },
+        "settings": { "type": "map", "description": "User preferences and audio settings" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last update" }
+      }
+    }
+  }
+}

@@ -54,9 +54,13 @@ export const Header: React.FC<HeaderProps> = ({
               stars
             </span>
           </h1>
-          <p className="text-xs sm:text-sm font-medium text-[#4c444c]/85">
-            Ready for today&apos;s quests?
-          </p>
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-[#4c444c]/85">
+            <span>Ready for today&apos;s quests?</span>
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#725477] font-semibold bg-[#e0bbe4]/25 px-2 py-0.5 rounded-full" title="Cloud multi-device sync active">
+              <span className="material-symbols-outlined text-[13px] text-green-600">cloud_done</span>
+              <span>Synced</span>
+            </span>
+          </div>
         </div>
       </div>
 

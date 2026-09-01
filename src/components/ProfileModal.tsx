@@ -83,6 +83,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <p className="text-[11px] text-[#4c444c]/80 mt-0.5">{currentAccount.email}</p>
           )}
 
+          <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/70 border border-[#eeedef] text-[11px] font-semibold text-[#4c444c]">
+            <span className="material-symbols-outlined text-[14px] text-green-600">cloud_done</span>
+            <span>Synced Across iPad, Phone & Web</span>
+          </div>
+
           <div className="mt-4 max-w-xs mx-auto">
             <div className="flex justify-between text-xs font-bold text-[#4c444c] mb-1">
               <span>{userStats.title} · Level {userStats.level}</span>

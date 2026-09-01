@@ -18,10 +18,31 @@ import { INITIAL_QUESTS, INITIAL_USER_STATS } from './data/initialQuests';
 import { Quest, UserStats, UserAccount, AppSettings } from './types';
 import { playTaskCompleteSound, setSoundEffectsEnabled } from './utils/audio';
 import { applyThemeToDocument } from './utils/theme';
+import {
+  saveAccountToCloud,
+  subscribeToCloudAccount,
+  fetchAllCloudAccounts,
+} from './utils/firebase';
 
-const STORAGE_KEY_ACCOUNTS = 'studyquest_accounts_v5';
-const STORAGE_KEY_ACTIVE_USER_ID = 'studyquest_active_user_id_v5';
-const STORAGE_KEY_SETTINGS = 'studyquest_settings_v5';
+const PRIMARY_STORAGE_KEY_ACCOUNTS = 'studyquest_master_accounts_v1';
+const PRIMARY_STORAGE_KEY_ACTIVE_USER_ID = 'studyquest_master_active_user_id';
+const PRIMARY_STORAGE_KEY_SETTINGS = 'studyquest_master_settings';
+
+const FALLBACK_ACCOUNT_KEYS = [
+  'studyquest_master_accounts_v1',
+  'studyquest_accounts_v5',
+  'studyquest_accounts_v4',
+  'studyquest_accounts_v3',
+  'studyquest_accounts_v2',
+  'studyquest_accounts',
+];
+
+const FALLBACK_ACTIVE_KEYS = [
+  'studyquest_master_active_user_id',
+  'studyquest_active_user_id_v5',
+  'studyquest_active_user_id_v4',
+  'studyquest_active_user_id',
+];
 
 const DEFAULT_SETTINGS: AppSettings = {
   age: 11,
@@ -66,9 +87,9 @@ const getTitleForLevel = (level: number) => {
 };
 
 const DEFAULT_INITIAL_ACCOUNT: UserAccount = {
-  id: 'user-nathan-scholar',
-  name: 'Nathan',
-  email: 'scholar@studyquest.edu',
+  id: 'user-bobby-jr-the-third',
+  name: 'Bobby Jr. the third',
+  email: 'bobby.jr3@studyquest.edu',
   age: 11,
   school: 'Bina Bangsa School',
   grade: 'Grade 5',
@@ -87,48 +108,109 @@ const sanitizeAccount = (account: UserAccount): UserAccount => {
   return account;
 };
 
-export default function App() {
-  // Accounts directory in localStorage
-  const [accounts, setAccounts] = useState<UserAccount[]>(() => {
+// Helper to scan all historical storage keys so user NEVER loses quests across app updates
+const loadAllPersistedAccounts = (): UserAccount[] => {
+  const accountsMap = new Map<string, UserAccount>();
+
+  // Insert default Bobby Jr account first
+  accountsMap.set(DEFAULT_INITIAL_ACCOUNT.id, DEFAULT_INITIAL_ACCOUNT);
+
+  for (const key of FALLBACK_ACCOUNT_KEYS) {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map(sanitizeAccount);
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (item && item.id && item.name) {
+              const sanitized = sanitizeAccount(item);
+              const existing = accountsMap.get(sanitized.id);
+              // Merge smartly: retain account with more quests or most recent
+              if (!existing) {
+                accountsMap.set(sanitized.id, sanitized);
+              } else {
+                const existingQuestsCount = existing.quests?.length || 0;
+                const newQuestsCount = sanitized.quests?.length || 0;
+                if (newQuestsCount >= existingQuestsCount) {
+                  accountsMap.set(sanitized.id, {
+                    ...existing,
+                    ...sanitized,
+                    quests: sanitized.quests && sanitized.quests.length > 0 ? sanitized.quests : existing.quests,
+                  });
+                }
+              }
+            }
+          }
         }
       }
     } catch (e) {
-      console.error('Failed to parse accounts', e);
+      console.warn('Error reading key', key, e);
     }
-    return [DEFAULT_INITIAL_ACCOUNT];
+  }
+
+  // Also check if standalone quests were stored under old quest key
+  try {
+    const rawQuests = localStorage.getItem('studyquest_quests');
+    if (rawQuests) {
+      const parsedQuests = JSON.parse(rawQuests);
+      if (Array.isArray(parsedQuests) && parsedQuests.length > 0) {
+        const bobby = accountsMap.get(DEFAULT_INITIAL_ACCOUNT.id) || DEFAULT_INITIAL_ACCOUNT;
+        if (!bobby.quests || bobby.quests.length === 0) {
+          bobby.quests = parsedQuests;
+          accountsMap.set(bobby.id, bobby);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading standalone quests', e);
+  }
+
+  return Array.from(accountsMap.values());
+};
+
+// Helper to load initial active account (always defaults to Bobby Jr. the third)
+const loadInitialActiveAccount = (allAccounts: UserAccount[]): UserAccount => {
+  let activeId: string | null = null;
+  for (const key of FALLBACK_ACTIVE_KEYS) {
+    const val = localStorage.getItem(key);
+    if (val) {
+      activeId = val;
+      break;
+    }
+  }
+
+  if (activeId) {
+    const found = allAccounts.find((a) => a.id === activeId);
+    if (found) return found;
+  }
+
+  // Find Bobby Jr. the third by name or ID
+  const bobby = allAccounts.find(
+    (a) => a.id === 'user-bobby-jr-the-third' || a.name.toLowerCase().includes('bobby jr')
+  );
+  if (bobby) return bobby;
+
+  return allAccounts[0] || DEFAULT_INITIAL_ACCOUNT;
+};
+
+export default function App() {
+  // Accounts directory in localStorage with multi-version fallback
+  const [accounts, setAccounts] = useState<UserAccount[]>(() => {
+    return loadAllPersistedAccounts();
   });
 
-  // Current active user account
+  // Current active user account (always defaults instantly to Bobby Jr. the third)
   const [currentAccount, setCurrentAccount] = useState<UserAccount | null>(() => {
-    try {
-      const activeId = localStorage.getItem(STORAGE_KEY_ACTIVE_USER_ID);
-      const savedAccounts = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
-      if (savedAccounts) {
-        const parsed = JSON.parse(savedAccounts);
-        if (Array.isArray(parsed)) {
-          if (activeId) {
-            const found = parsed.find((a: UserAccount) => a.id === activeId);
-            if (found) return sanitizeAccount(found);
-          }
-          if (parsed.length > 0) return sanitizeAccount(parsed[0]);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load active account', e);
-    }
-    return DEFAULT_INITIAL_ACCOUNT;
+    const initialAccounts = loadAllPersistedAccounts();
+    return loadInitialActiveAccount(initialAccounts);
   });
 
   // Settings state in localStorage
   const [settings, setSettings] = useState<AppSettings>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
+      const saved = localStorage.getItem(PRIMARY_STORAGE_KEY_SETTINGS) ||
+                    localStorage.getItem('studyquest_settings_v5') ||
+                    localStorage.getItem('studyquest_settings');
       if (saved) {
         return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
       }
@@ -170,6 +252,10 @@ export default function App() {
   });
   const [xpToasts, setXpToasts] = useState<XpToastInfo[]>([]);
 
+  // Guard against overwriting cloud with blank data on initial startup
+  const hasLoadedInitialCloudDataRef = useRef(false);
+  const isLocalUpdateRef = useRef(false);
+
   // Keep sound effects in sync with settings
   useEffect(() => {
     setSoundEffectsEnabled(settings.enableSoundEffects);
@@ -184,19 +270,25 @@ export default function App() {
     }
   }, [currentAccount?.avatarColor]);
 
-  // Save settings to localStorage
+  // Save settings to all localStorage keys
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+      const payload = JSON.stringify(settings);
+      localStorage.setItem(PRIMARY_STORAGE_KEY_SETTINGS, payload);
+      localStorage.setItem('studyquest_settings_v5', payload);
+      localStorage.setItem('studyquest_settings', payload);
     } catch (e) {
       console.error('Failed saving settings', e);
     }
   }, [settings]);
 
-  // When accounts or currentAccount changes, sync to storage
+  // When accounts or currentAccount changes, sync to all storage keys
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+      const payload = JSON.stringify(accounts);
+      localStorage.setItem(PRIMARY_STORAGE_KEY_ACCOUNTS, payload);
+      localStorage.setItem('studyquest_accounts_v5', payload);
+      localStorage.setItem('studyquest_accounts', payload);
     } catch (e) {
       console.error('Failed saving accounts', e);
     }
@@ -205,16 +297,99 @@ export default function App() {
   useEffect(() => {
     try {
       if (currentAccount) {
-        localStorage.setItem(STORAGE_KEY_ACTIVE_USER_ID, currentAccount.id);
-      } else {
-        localStorage.removeItem(STORAGE_KEY_ACTIVE_USER_ID);
+        localStorage.setItem(PRIMARY_STORAGE_KEY_ACTIVE_USER_ID, currentAccount.id);
+        localStorage.setItem('studyquest_active_user_id_v5', currentAccount.id);
       }
     } catch (e) {
       console.error('Failed saving active account ID', e);
     }
   }, [currentAccount]);
 
-  // Whenever quests or userStats update, sync back into currentAccount & accounts
+  // Synchronize accounts with Cloud Firestore on boot (and pull latest quests)
+  useEffect(() => {
+    let isMounted = true;
+    fetchAllCloudAccounts()
+      .then((cloudAccounts) => {
+        if (!isMounted) return;
+        if (cloudAccounts.length > 0) {
+          setAccounts((prev) => {
+            const map = new Map<string, UserAccount>();
+            prev.forEach((a) => map.set(a.id, a));
+            cloudAccounts.forEach((ca) => {
+              const existing = map.get(ca.id);
+              if (!existing) {
+                map.set(ca.id, ca);
+              } else {
+                // Merge cloud and local, keeping whichever has quests
+                const existingQuests = existing.quests || [];
+                const cloudQuests = ca.quests || [];
+                map.set(ca.id, {
+                  ...existing,
+                  ...ca,
+                  quests: cloudQuests.length >= existingQuests.length ? cloudQuests : existingQuests,
+                  stats: ca.stats || existing.stats,
+                });
+              }
+            });
+            return Array.from(map.values());
+          });
+
+          // If currentAccount is active, ensure we load any remote quests if local has none
+          if (currentAccount) {
+            const remoteActive = cloudAccounts.find(
+              (a) => a.id === currentAccount.id || a.name.toLowerCase() === currentAccount.name.toLowerCase()
+            );
+            if (remoteActive) {
+              if (remoteActive.quests && remoteActive.quests.length > 0 && quests.length === 0) {
+                setQuests(remoteActive.quests);
+              }
+              if (remoteActive.stats) {
+                setUserStats(remoteActive.stats);
+              }
+            }
+          }
+        }
+        hasLoadedInitialCloudDataRef.current = true;
+      })
+      .catch((err) => {
+        console.warn('Cloud sync on start note:', err);
+        hasLoadedInitialCloudDataRef.current = true;
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Real-time Cloud Firestore Subscription for multi-device sync
+  useEffect(() => {
+    if (!currentAccount?.id) return;
+
+    const unsubscribe = subscribeToCloudAccount(currentAccount.id, (cloudAccount) => {
+      if (!cloudAccount) return;
+      if (isLocalUpdateRef.current) {
+        // Skip if this update originated locally in the last tick
+        return;
+      }
+
+      // Check if remote account has changes
+      if (cloudAccount.quests && JSON.stringify(cloudAccount.quests) !== JSON.stringify(quests)) {
+        setQuests(cloudAccount.quests);
+      }
+      if (cloudAccount.stats && JSON.stringify(cloudAccount.stats) !== JSON.stringify(userStats)) {
+        setUserStats(cloudAccount.stats);
+      }
+      if (cloudAccount.settings && JSON.stringify(cloudAccount.settings) !== JSON.stringify(settings)) {
+        setSettings((prev) => ({ ...prev, ...cloudAccount.settings }));
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [currentAccount?.id]);
+
+  // Whenever quests or userStats update, sync locally AND to Cloud Firestore
   useEffect(() => {
     if (!currentAccount) return;
 
@@ -222,6 +397,8 @@ export default function App() {
       ...currentAccount,
       stats: userStats,
       quests: quests,
+      settings: settings,
+      updatedAt: new Date().toISOString(),
     };
 
     setAccounts((prev) => {
@@ -233,7 +410,24 @@ export default function App() {
       }
       return [...prev, updatedAccount];
     });
-  }, [quests, userStats]);
+
+    // Also persist standalone quests so they can never be lost
+    try {
+      localStorage.setItem('studyquest_quests', JSON.stringify(quests));
+    } catch (e) {}
+
+    // Only save to Cloud Firestore once initial cloud sync has resolved
+    // or if quests actually contain user data
+    if (hasLoadedInitialCloudDataRef.current || quests.length > 0) {
+      isLocalUpdateRef.current = true;
+      saveAccountToCloud(updatedAccount).catch(() => {});
+      const timer = setTimeout(() => {
+        isLocalUpdateRef.current = false;
+      }, 400);
+
+      return () => clearTimeout(timer);
+    }
+  }, [quests, userStats, settings]);
 
   // Login handler
   const handleLoginSuccess = (account: UserAccount) => {

@@ -65,16 +65,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onImportQuests,
   onResetQuests,
 }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'performance' | 'workflow' | 'data'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'performance' | 'workflow' | 'data'>('profile');
 
   // Form states for Profile
   const [name, setName] = useState(currentAccount.name || '');
   const [email, setEmail] = useState(currentAccount.email || 'scholar@studyquest.edu');
-  const [age, setAge] = useState<number | ''>(currentAccount.age || 16);
-  const [grade, setGrade] = useState(currentAccount.grade || 'Grade 10');
+  const [age, setAge] = useState<number | ''>(currentAccount.age || 11);
+  const [grade, setGrade] = useState(currentAccount.grade || 'Grade 5');
   const [school, setSchool] = useState(currentAccount.school || 'Bina Bangsa School');
   const [avatarIcon, setAvatarIcon] = useState(currentAccount.avatarIcon || 'school');
   const [avatarColor, setAvatarColor] = useState(currentAccount.avatarColor || 'bg-[#e0bbe4] text-[#725477]');
+
+  // Form states for Password & Security
+  const [currentPasswordInput, setCurrentPasswordInput] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [securityError, setSecurityError] = useState('');
+  const [securitySuccess, setSecuritySuccess] = useState('');
 
   // Form states for Performance & Preferences
   const [lowPowerMode, setLowPowerMode] = useState(settings.lowPowerMode);
@@ -97,11 +106,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (isOpen) {
       setName(currentAccount.name || '');
       setEmail(currentAccount.email || 'scholar@studyquest.edu');
-      setAge(currentAccount.age !== undefined ? currentAccount.age : 16);
-      setGrade(currentAccount.grade || 'Grade 10');
+      setAge(currentAccount.age !== undefined ? currentAccount.age : 11);
+      setGrade(currentAccount.grade || 'Grade 5');
       setSchool(currentAccount.school || 'Bina Bangsa School');
       setAvatarIcon(currentAccount.avatarIcon || 'school');
       setAvatarColor(currentAccount.avatarColor || 'bg-[#e0bbe4] text-[#725477]');
+
+      setCurrentPasswordInput('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setSecurityError('');
+      setSecuritySuccess('');
 
       setLowPowerMode(settings.lowPowerMode);
       setEnableAnimations(settings.enableAnimations);
@@ -118,6 +133,74 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   }, [isOpen, currentAccount, settings]);
 
   if (!isOpen) return null;
+
+  const handleUpdatePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSecurityError('');
+    setSecuritySuccess('');
+
+    // If account already has a password, verify current password
+    if (currentAccount.password && currentAccount.password !== currentPasswordInput.trim()) {
+      setSecurityError('Current password does not match. Please verify your existing password.');
+      return;
+    }
+
+    if (!newPassword.trim()) {
+      setSecurityError('Please enter a new password or PIN.');
+      return;
+    }
+
+    if (newPassword.trim().length < 4) {
+      setSecurityError('Password must be at least 4 characters or digits long.');
+      return;
+    }
+
+    if (newPassword.trim() !== confirmNewPassword.trim()) {
+      setSecurityError('New password and confirm password do not match.');
+      return;
+    }
+
+    // Update account with new password
+    onUpdateAccount({
+      password: newPassword.trim(),
+    });
+
+    setSecuritySuccess('Password successfully updated & synced across all your devices!');
+    setCurrentPasswordInput('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+
+    if (enableConfetti) {
+      confetti({
+        particleCount: 45,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#725477', '#b5f1bc', '#b1cdfd'],
+      });
+    }
+
+    setTimeout(() => {
+      setSecuritySuccess('');
+    }, 4000);
+  };
+
+  const handleRemovePassword = () => {
+    if (currentAccount.password && currentAccount.password !== currentPasswordInput.trim()) {
+      setSecurityError('Please enter your current password above first to remove password protection.');
+      return;
+    }
+
+    onUpdateAccount({
+      password: undefined,
+    });
+    setSecuritySuccess('Password protection removed. Any device can now sign in without a password.');
+    setCurrentPasswordInput('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setTimeout(() => {
+      setSecuritySuccess('');
+    }, 4000);
+  };
 
   const handleSaveAll = () => {
     // Save Profile
@@ -280,6 +363,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <button
             type="button"
+            onClick={() => setActiveTab('security')}
+            style={activeTab === 'security' ? { borderBottomColor: 'var(--theme-primary)', color: 'var(--theme-primary)' } : {}}
+            className={`py-3 px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 border-b-2 transition-all whitespace-nowrap ${
+              activeTab === 'security'
+                ? ''
+                : 'border-transparent text-[#4c444c] hover:text-[#1a1c1d]'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">lock</span>
+            <span>Password & Security</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('performance')}
             style={activeTab === 'performance' ? { borderBottomColor: 'var(--theme-primary)', color: 'var(--theme-primary)' } : {}}
             className={`py-3 px-3 text-xs sm:text-sm font-bold flex items-center gap-1.5 border-b-2 transition-all whitespace-nowrap ${
@@ -360,7 +457,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Nathan"
+                    placeholder="e.g. Bobby Jr. the third"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm font-medium"
                   />
                 </div>
@@ -523,6 +620,182 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Password & Security Quick Banner */}
+              <div className="p-4 rounded-2xl bg-[#f4eff4] border border-[#eeedef] flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#e0bbe4] text-[#725477] flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-[22px]">lock</span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-[#1a1c1d]">
+                      Account Password & Multi-Device Security
+                    </h4>
+                    <p className="text-[11px] text-[#4c444c] mt-0.5">
+                      {currentAccount.password
+                        ? '🔒 Password protected (Compulsory on iPad, phone & web)'
+                        : '⚠️ No password set yet. Click below to set a secure password.'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('security')}
+                  className="px-3.5 py-2 rounded-xl bg-[#725477] text-white text-xs font-bold hover:bg-[#593d5f] transition-all shrink-0"
+                >
+                  {currentAccount.password ? 'Change Password' : 'Set Password'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: Password & Security */}
+          {activeTab === 'security' && (
+            <div className="space-y-5 animate-fadeIn">
+              {/* Security Status Card */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#e0bbe4]/25 via-white to-[#d5e3ff]/25 border border-[#e0bbe4]/40 flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#725477] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <span className="material-symbols-outlined text-[22px]">shield_lock</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-[#1a1c1d]">
+                      Compulsory Account Protection
+                    </h4>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      currentAccount.password
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {currentAccount.password ? 'Protected' : 'Password Required'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#4c444c] mt-1 leading-relaxed">
+                    Setting a password makes it <strong>compulsory</strong> whenever anyone logs into <strong>{currentAccount.name}</strong> from any device (phone, iPad, Chromebook, or browser). This protects your quests, EXP, and school tasks.
+                  </p>
+                </div>
+              </div>
+
+              {securityError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-bold flex items-center gap-2 animate-fadeIn">
+                  <span className="material-symbols-outlined text-[18px]">error</span>
+                  <span>{securityError}</span>
+                </div>
+              )}
+
+              {securitySuccess && (
+                <div className="p-3 bg-[#b5f1bc]/40 border border-[#b5f1bc] text-[#18512a] rounded-xl text-xs font-bold flex items-center gap-2 animate-fadeIn">
+                  <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                  <span>{securitySuccess}</span>
+                </div>
+              )}
+
+              {/* Password Change / Setup Form */}
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                {currentAccount.password && (
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
+                      Current Password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4c444c]/70 text-[20px]">
+                        lock_clock
+                      </span>
+                      <input
+                        type={showCurrentPass ? 'text' : 'password'}
+                        value={currentPasswordInput}
+                        onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                        placeholder="Enter your current password"
+                        className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPass(!showCurrentPass)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4c444c]/70 hover:text-[#1a1c1d]"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          {showCurrentPass ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
+                      New Password or PIN <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4c444c]/70 text-[20px]">
+                        key
+                      </span>
+                      <input
+                        type={showNewPass ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Min. 4 characters or PIN"
+                        className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPass(!showNewPass)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4c444c]/70 hover:text-[#1a1c1d]"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          {showNewPass ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1a1c1d] mb-1.5">
+                      Confirm New Password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4c444c]/70 text-[20px]">
+                        verified_user
+                      </span>
+                      <input
+                        type={showNewPass ? 'text' : 'password'}
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="Re-type new password"
+                        className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-[#725477] text-white text-xs sm:text-sm font-bold hover:bg-[#593d5f] active:scale-98 transition-all flex items-center gap-2 shadow-xs"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">lock_reset</span>
+                    <span>{currentAccount.password ? 'Update Password' : 'Save & Make Password Compulsory'}</span>
+                  </button>
+
+                  {currentAccount.password && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePassword}
+                      className="px-3 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-all"
+                    >
+                      Remove Password Protection
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {/* Cloud Sync Information */}
+              <div className="p-3.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] text-xs text-[#4c444c] flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-[20px] text-green-600">cloud_sync</span>
+                <span>
+                  Your password is automatically encrypted and synced in real time with Cloud Firestore across all devices.
+                </span>
               </div>
             </div>
           )}
