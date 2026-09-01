@@ -1,22 +1,28 @@
 import React from 'react';
-import { UserStats } from '../types';
+import { UserStats, UserAccount } from '../types';
 
 interface HeaderProps {
   userStats: UserStats;
+  currentAccount?: UserAccount | null;
   onOpenSearch: () => void;
   onOpenNotifications: () => void;
   onOpenProfile: () => void;
+  onOpenSettings: () => void;
+  onLogOut?: () => void;
   onToggleMobileMenu?: () => void;
   unreadCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   userStats,
+  currentAccount,
   onOpenSearch,
   onOpenNotifications,
   onOpenProfile,
+  onOpenSettings,
+  onLogOut,
   onToggleMobileMenu,
-  unreadCount = 2,
+  unreadCount = 0,
 }) => {
   return (
     <header
@@ -42,19 +48,20 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </h1>
           <p className="text-xs sm:text-sm font-medium text-[#4c444c]/85">
-            Ready for today&apos;s adventures?
+            Ready for today&apos;s quests?
           </p>
         </div>
       </div>
 
       {/* Action Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Search button */}
         <button
           id="btn-header-search"
           onClick={onOpenSearch}
           aria-label="Search quests and notes"
           className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#e0bbe4]/25 active:scale-95 transition-all text-[#725477]"
+          title="Search Quests"
         >
           <span className="material-symbols-outlined text-[22px]">search</span>
         </button>
@@ -65,6 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onOpenNotifications}
           aria-label="Notifications"
           className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#e0bbe4]/25 active:scale-95 transition-all relative text-[#725477]"
+          title="Notifications & Alarms"
         >
           <span className="material-symbols-outlined text-[22px]">notifications</span>
           {unreadCount > 0 && (
@@ -72,16 +80,43 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
+        {/* Settings button */}
+        <button
+          id="btn-header-settings"
+          onClick={onOpenSettings}
+          aria-label="Settings and Performance"
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#e0bbe4]/25 active:scale-95 transition-all text-[#725477]"
+          title="Settings (Grade, Performance & Audio)"
+        >
+          <span className="material-symbols-outlined text-[22px]">settings</span>
+        </button>
+
         {/* Profile Avatar Button */}
         <button
           id="btn-header-profile"
           onClick={onOpenProfile}
           aria-label="View user profile"
-          className="w-9 h-9 rounded-full bg-[#725477] hover:ring-4 hover:ring-[#e0bbe4]/50 flex items-center justify-center ml-2 shadow-lg shadow-[#725477]/25 transition-all active:scale-95"
+          className={`w-9 h-9 rounded-full ${
+            currentAccount?.avatarColor || 'bg-[#725477] text-white'
+          } hover:ring-4 hover:ring-[#e0bbe4]/50 flex items-center justify-center ml-1 sm:ml-2 shadow-md transition-all active:scale-95`}
+          title={`${userStats.name} (${currentAccount?.grade || 'Scholar'}, ${currentAccount?.school || 'Bina Bangsa'}) - View Profile`}
         >
-          <span className="material-symbols-outlined text-white text-[19px]">person</span>
+          <span className="material-symbols-outlined text-[19px]">
+            {currentAccount?.avatarIcon || 'person'}
+          </span>
         </button>
+
+        {onLogOut && (
+          <button
+            onClick={onLogOut}
+            title="Log out or switch account"
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-red-50 text-[#4c444c] hover:text-red-600 transition-all ml-1"
+          >
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+          </button>
+        )}
       </div>
     </header>
   );
 };
+

@@ -44,7 +44,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             <span className="material-symbols-outlined text-[#725477] text-[20px]">
               notifications_active
             </span>
-            <h3 className="font-bold text-[#1a1c1d] text-base">Study Reminders & Deadlines</h3>
+            <h3 className="font-bold text-[#1a1c1d] text-base">Study Quests & Deadlines</h3>
           </div>
           <span className="text-xs font-bold text-[#725477] bg-[#e0bbe4]/40 px-2 py-0.5 rounded-full">
             {sortedUpcoming.length} Active

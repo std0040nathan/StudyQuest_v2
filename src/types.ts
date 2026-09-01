@@ -47,3 +47,37 @@ export interface UserStats {
   streak: number;
   completedQuestsCount: number;
 }
+
+export interface AppSettings {
+  // Student & Profile settings
+  age?: number;
+  grade?: string;
+  school?: string;
+  dailyStudyGoalHours?: number;
+  
+  // Performance settings
+  lowPowerMode: boolean; // Disables heavy blur/animations for school Chromebooks/low-spec devices
+  enableAnimations: boolean; // Master toggle for motion and transitions
+  enableConfetti: boolean; // Particle bursts on level up and quest completion
+  enableSoundEffects: boolean; // Audio synthesizer feedback
+  compactMode: boolean; // Denser layout for smaller screens
+  
+  // Workflow settings
+  autoCompleteOnAllSteps: boolean;
+  defaultAlarmLeadMinutes: number; // e.g. 0, 15, 30, 60
+}
+
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  age?: number;
+  school?: string;
+  grade?: string;
+  avatarIcon?: string;
+  avatarColor?: string;
+  settings?: Partial<AppSettings>;
+  stats: UserStats;
+  quests: Quest[];
+  createdAt: string;
+}

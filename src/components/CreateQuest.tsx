@@ -12,10 +12,34 @@ const SCHOOL_SUBJECTS: SchoolSubject[] = [
   'Math',
   'English',
   'Science',
+  'Physics',
+  'Chemistry',
+  'Biology',
   'Chinese',
   'Bahasa Indo',
   'Computer Science (CS)',
+  'History',
+  'Geography',
   'Art',
+  'Music',
+  'Economics',
+  'Physical Education (PE)',
+  'Other',
+];
+
+const POPULAR_OTHER_SUBJECTS = [
+  'Social Studies',
+  'Accounting',
+  'Business Studies',
+  'Psychology',
+  'Robotics',
+  'Literature',
+  'Design & Tech',
+  'Philosophy',
+  'Spanish',
+  'German',
+  'Drama / Theater',
+  'Statistics',
 ];
 
 const formatTime12h = (time24: string) => {
@@ -83,7 +107,10 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
 
     setIsSubmitting(true);
 
-    const chosenSubject = customSubject.trim() || subject;
+    const chosenSubject = subject === 'Other'
+      ? (customSubject.trim() || 'Other')
+      : (customSubject.trim() || subject);
+
     const dateObj = deadline ? new Date(deadline + 'T00:00:00') : new Date();
     const dayNum = dateObj.getDate();
     const monthName = dateObj.toLocaleString('en-US', { month: 'short' });
@@ -110,7 +137,7 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
       hasAlarm,
       alarmTime: hasAlarm ? alarmTime : undefined,
       alarmTimeFormatted: formattedAlarmTime,
-      details: details.trim() || `${chosenSubject} assignment`,
+      details: details.trim() || `${chosenSubject} quest`,
       steps: questSteps,
       isCompleted: false,
       isToday: isTodayQuest,
@@ -197,10 +224,10 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
           {/* Title and Subtitle */}
           <div className="relative z-10 flex flex-col gap-2 mb-8 mt-2">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#1a1c1d] tracking-tight">
-              Hatch a New Reminder!
+              Hatch a New Quest!
             </h2>
             <p className="text-base sm:text-lg font-medium text-[#4c444c]">
-              Set your homework, deadline, and alarm reminder.
+              Set your homework, deadline, and study quest.
             </p>
           </div>
 
@@ -231,29 +258,99 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
               </div>
 
               {/* School Subjects Selector */}
-              <div className="flex flex-col gap-1.5 pt-1.5">
-                <span className="text-xs font-bold text-[#725477]">
-                  Select School Subject:
-                </span>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {SCHOOL_SUBJECTS.map((sub) => (
-                    <button
-                      type="button"
-                      key={sub}
-                      onClick={() => {
-                        setSubject(sub);
-                        setCustomSubject('');
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs ${
-                        subject === sub && !customSubject
-                          ? 'bg-[#725477] text-white shadow-md'
-                          : 'bg-[#eeedef] text-[#4c444c] hover:bg-[#e0bbe4]/30 hover:text-[#725477]'
-                      }`}
-                    >
-                      {sub}
-                    </button>
-                  ))}
+              <div className="flex flex-col gap-2 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#725477]">
+                    Select School Subject:
+                  </span>
+                  {subject === 'Other' && (
+                    <span className="text-[11px] font-semibold text-[#725477] bg-[#e0bbe4]/30 px-2.5 py-0.5 rounded-full">
+                      Custom Subject Mode
+                    </span>
+                  )}
                 </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {SCHOOL_SUBJECTS.map((sub) => {
+                    const isOther = sub === 'Other';
+                    const isSelected = isOther ? subject === 'Other' : subject === sub && !customSubject;
+
+                    return (
+                      <button
+                        type="button"
+                        key={sub}
+                        onClick={() => {
+                          setSubject(sub);
+                          if (!isOther) {
+                            setCustomSubject('');
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 ${
+                          isSelected
+                            ? isOther
+                              ? 'bg-[#725477] text-white ring-2 ring-[#e0bbe4]'
+                              : 'bg-[#725477] text-white shadow-md'
+                            : isOther
+                            ? 'bg-[#e0bbe4]/40 text-[#725477] border border-[#e0bbe4] hover:bg-[#e0bbe4]/60'
+                            : 'bg-[#eeedef] text-[#4c444c] hover:bg-[#e0bbe4]/30 hover:text-[#725477]'
+                        }`}
+                      >
+                        {isOther && (
+                          <span className="material-symbols-outlined text-[15px]">
+                            more_horiz
+                          </span>
+                        )}
+                        <span>{sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom "Other" Subject Input Box & Quick Elective Suggestions */}
+                {subject === 'Other' && (
+                  <div className="mt-2 p-3.5 rounded-2xl bg-[#faf9fb] border border-[#e0bbe4] space-y-3 animate-fadeIn">
+                    <div>
+                      <label className="block text-xs font-bold text-[#725477] mb-1">
+                        Enter Custom Subject Name:
+                      </label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#725477] text-[18px]">
+                          auto_awesome
+                        </span>
+                        <input
+                          type="text"
+                          autoFocus
+                          value={customSubject}
+                          onChange={(e) => setCustomSubject(e.target.value)}
+                          placeholder="e.g. Psychology, Accounting, Robotics, Biology..."
+                          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/40 outline-none text-xs sm:text-sm text-[#1a1c1d] font-semibold transition-all shadow-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quick popular electives chips */}
+                    <div>
+                      <span className="text-[11px] font-bold text-[#4c444c] block mb-1.5">
+                        Quick Suggestions:
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {POPULAR_OTHER_SUBJECTS.map((popSub) => (
+                          <button
+                            type="button"
+                            key={popSub}
+                            onClick={() => setCustomSubject(popSub)}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                              customSubject.toLowerCase() === popSub.toLowerCase()
+                                ? 'bg-[#725477] text-white font-bold shadow-xs'
+                                : 'bg-white text-[#4c444c] border border-[#eeedef] hover:bg-[#e0bbe4]/25 hover:text-[#725477]'
+                            }`}
+                          >
+                            + {popSub}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -263,7 +360,7 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
                 htmlFor="tor"
                 className="text-xs font-bold text-[#4c444c] group-focus-within:text-[#725477] transition-colors"
               >
-                Reminder Category / Type
+                Quest Category / Type
               </label>
               <div className="flex items-center gap-2 flex-wrap">
                 {quickTypes.map((t) => (
@@ -507,18 +604,18 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
                 {submitSuccess ? (
                   <>
                     <span className="material-symbols-outlined text-[20px]">check</span>
-                    <span>Reminder Set!</span>
+                    <span>Quest Hatched!</span>
                   </>
                 ) : isSubmitting ? (
                   <>
                     <span className="material-symbols-outlined animate-spin text-[20px]">
                       progress_activity
                     </span>
-                    <span>Saving Reminder...</span>
+                    <span>Hatching Quest...</span>
                   </>
                 ) : (
                   <>
-                    <span>Create Reminder</span>
+                    <span>Hatch Quest</span>
                     <span className="material-symbols-outlined text-[18px]">add_task</span>
                   </>
                 )}

@@ -1,16 +1,24 @@
 import React from 'react';
-import { UserStats } from '../types';
+import { UserStats, UserAccount } from '../types';
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   userStats: UserStats;
+  currentAccount?: UserAccount | null;
+  onLogOut?: () => void;
+  onSwitchAccount?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
   onClose,
   userStats,
+  currentAccount,
+  onLogOut,
+  onSwitchAccount,
+  onOpenSettings,
 }) => {
   if (!isOpen) return null;
 
@@ -33,23 +41,48 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       >
         {/* Header with avatar */}
         <div className="p-6 bg-gradient-to-br from-[#e0bbe4]/40 to-[#d5e3ff]/40 text-center relative border-b border-[#eeedef]">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center text-[#4c444c]"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
+          <div className="absolute top-4 right-4 flex items-center gap-1">
+            {onOpenSettings && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenSettings();
+                }}
+                title="Settings & Grade"
+                className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center text-[#725477]"
+              >
+                <span className="material-symbols-outlined text-[20px]">settings</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center text-[#4c444c]"
+            >
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </div>
 
-          <div className="w-20 h-20 rounded-full bg-[#725477] text-white flex items-center justify-center mx-auto mb-3 shadow-lg ring-4 ring-white">
-            <span className="material-symbols-outlined text-[40px]">person</span>
+          <div
+            className={`w-20 h-20 rounded-full ${
+              currentAccount?.avatarColor || 'bg-[#725477] text-white'
+            } flex items-center justify-center mx-auto mb-3 shadow-lg ring-4 ring-white`}
+          >
+            <span className="material-symbols-outlined text-[40px]">
+              {currentAccount?.avatarIcon || 'person'}
+            </span>
           </div>
 
           <h3 className="text-xl font-bold text-[#1a1c1d]">{userStats.name}</h3>
-          <p className="text-sm font-semibold text-[#725477]">{userStats.title} · Level {userStats.level}</p>
+          <p className="text-xs font-semibold text-[#725477] mt-0.5">
+            {currentAccount?.grade || 'Scholar'} • {currentAccount?.school || 'Bina Bangsa School'}
+          </p>
+          {currentAccount?.email && (
+            <p className="text-[11px] text-[#4c444c]/80 mt-0.5">{currentAccount.email}</p>
+          )}
 
           <div className="mt-4 max-w-xs mx-auto">
             <div className="flex justify-between text-xs font-bold text-[#4c444c] mb-1">
-              <span>XP Progress</span>
+              <span>{userStats.title} · Level {userStats.level}</span>
               <span>{userStats.xp} / {userStats.xpToNextLevel} XP</span>
             </div>
             <div className="w-full h-2.5 bg-white rounded-full overflow-hidden shadow-inner">
@@ -102,15 +135,59 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
         </div>
 
-        <div className="p-4 px-6 border-t border-[#eeedef] bg-[#faf9fb] text-right">
+        {/* Footer Actions */}
+        <div className="p-4 px-6 border-t border-[#eeedef] bg-[#faf9fb] flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {onOpenSettings && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenSettings();
+                }}
+                className="px-3 py-2 text-xs font-bold text-[#725477] hover:bg-[#e0bbe4]/25 rounded-xl transition-all flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[16px]">settings</span>
+                <span>Settings</span>
+              </button>
+            )}
+            {onSwitchAccount && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onSwitchAccount();
+                }}
+                className="px-3 py-2 text-xs font-bold text-[#4c444c] hover:bg-[#e0bbe4]/25 rounded-xl transition-all flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[16px]">switch_account</span>
+                <span>Switch</span>
+              </button>
+            )}
+            {onLogOut && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onLogOut();
+                }}
+                className="px-2.5 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[16px]">logout</span>
+                <span>Log Out</span>
+              </button>
+            )}
+          </div>
+
           <button
             onClick={onClose}
             className="px-4 py-2 bg-[#725477] text-white text-xs font-bold rounded-xl hover:bg-[#593d5f] transition-all"
           >
-            Close
+            Done
           </button>
         </div>
       </div>
     </div>
   );
 };
+

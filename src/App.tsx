@@ -9,15 +9,32 @@ import { CalendarModal } from './components/CalendarModal';
 import { SearchModal } from './components/SearchModal';
 import { NotificationsModal } from './components/NotificationsModal';
 import { ProfileModal } from './components/ProfileModal';
+import { SettingsModal } from './components/SettingsModal';
 import { LevelUpModal } from './components/LevelUpModal';
 import { AlarmNotificationModal } from './components/AlarmNotificationModal';
+import { AuthScreen } from './components/AuthScreen';
 import { XpToast, XpToastInfo } from './components/XpToast';
 import { INITIAL_QUESTS, INITIAL_USER_STATS } from './data/initialQuests';
-import { Quest, UserStats } from './types';
-import { playTaskCompleteSound } from './utils/audio';
+import { Quest, UserStats, UserAccount, AppSettings } from './types';
+import { playTaskCompleteSound, setSoundEffectsEnabled } from './utils/audio';
 
-const STORAGE_KEY_QUESTS = 'studyquest_quests_v3';
-const STORAGE_KEY_STATS = 'studyquest_stats_v3';
+const STORAGE_KEY_ACCOUNTS = 'studyquest_accounts_v5';
+const STORAGE_KEY_ACTIVE_USER_ID = 'studyquest_active_user_id_v5';
+const STORAGE_KEY_SETTINGS = 'studyquest_settings_v5';
+
+const DEFAULT_SETTINGS: AppSettings = {
+  age: 16,
+  grade: 'Secondary 4 / Grade 10',
+  school: 'Bina Bangsa School',
+  dailyStudyGoalHours: 3,
+  lowPowerMode: false,
+  enableAnimations: true,
+  enableConfetti: true,
+  enableSoundEffects: true,
+  compactMode: false,
+  autoCompleteOnAllSteps: true,
+  defaultAlarmLeadMinutes: 15,
+};
 
 const LEVEL_TITLES = [
   'Novice Scholar',
@@ -34,7 +51,7 @@ const LEVEL_TITLES = [
   'Explorer Mode',
   'Academic Champion',
   'High Archon',
-  'Sage of Reminders',
+  'Sage of Quests',
   'Grandmaster Mind',
   'Productivity Paragon',
   'Mythic Polymath',
@@ -47,28 +64,78 @@ const getTitleForLevel = (level: number) => {
   return LEVEL_TITLES[idx];
 };
 
+const DEFAULT_DEMO_ACCOUNT: UserAccount = {
+  id: 'user-demo-nathan',
+  name: 'Nathan',
+  email: 'std0040.nathan@binabangsaschool.com',
+  age: 16,
+  school: 'Bina Bangsa School',
+  grade: 'Secondary 4 / Grade 10',
+  avatarIcon: 'school',
+  avatarColor: 'bg-[#e0bbe4] text-[#725477]',
+  stats: INITIAL_USER_STATS,
+  quests: INITIAL_QUESTS,
+  createdAt: new Date().toISOString(),
+};
+
 export default function App() {
+  // Accounts directory in localStorage
+  const [accounts, setAccounts] = useState<UserAccount[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to parse accounts', e);
+    }
+    return [DEFAULT_DEMO_ACCOUNT];
+  });
+
+  // Current active user account
+  const [currentAccount, setCurrentAccount] = useState<UserAccount | null>(() => {
+    try {
+      const activeId = localStorage.getItem(STORAGE_KEY_ACTIVE_USER_ID);
+      const savedAccounts = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
+      if (savedAccounts) {
+        const parsed = JSON.parse(savedAccounts);
+        if (Array.isArray(parsed)) {
+          if (activeId) {
+            const found = parsed.find((a: UserAccount) => a.id === activeId);
+            if (found) return found;
+          }
+          if (parsed.length > 0) return parsed[0];
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load active account', e);
+    }
+    return DEFAULT_DEMO_ACCOUNT;
+  });
+
+  // Settings state in localStorage
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
+      if (saved) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      }
+    } catch (e) {
+      console.error('Failed to load settings', e);
+    }
+    return DEFAULT_SETTINGS;
+  });
+
   const [currentTab, setCurrentTab] = useState<'dashboard' | 'create-new-quest'>('dashboard');
 
-  // Load persistent state
+  // Active student's quests and stats
   const [quests, setQuests] = useState<Quest[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_QUESTS);
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // fallback
-    }
-    return INITIAL_QUESTS;
+    return currentAccount?.quests || INITIAL_QUESTS;
   });
 
   const [userStats, setUserStats] = useState<UserStats>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_STATS);
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // fallback
-    }
-    return INITIAL_USER_STATS;
+    return currentAccount?.stats || INITIAL_USER_STATS;
   });
 
   // Modals state
@@ -77,6 +144,7 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Active Alarm triggering
@@ -86,27 +154,99 @@ export default function App() {
   // Level Up & XP Toasts
   const [levelUpInfo, setLevelUpInfo] = useState<{ isOpen: boolean; level: number; title: string }>({
     isOpen: false,
-    level: 12,
-    title: 'Explorer Mode',
+    level: 1,
+    title: 'Novice Scholar',
   });
   const [xpToasts, setXpToasts] = useState<XpToastInfo[]>([]);
 
-  // Sync with localStorage
+  // Keep sound effects in sync with settings
+  useEffect(() => {
+    setSoundEffectsEnabled(settings.enableSoundEffects);
+  }, [settings.enableSoundEffects]);
+
+  // Save settings to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY_QUESTS, JSON.stringify(quests));
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
     } catch (e) {
-      console.error('Failed saving quests', e);
+      console.error('Failed saving settings', e);
     }
-  }, [quests]);
+  }, [settings]);
+
+  // When accounts or currentAccount changes, sync to storage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+    } catch (e) {
+      console.error('Failed saving accounts', e);
+    }
+  }, [accounts]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(userStats));
+      if (currentAccount) {
+        localStorage.setItem(STORAGE_KEY_ACTIVE_USER_ID, currentAccount.id);
+      } else {
+        localStorage.removeItem(STORAGE_KEY_ACTIVE_USER_ID);
+      }
     } catch (e) {
-      console.error('Failed saving user stats', e);
+      console.error('Failed saving active account ID', e);
     }
-  }, [userStats]);
+  }, [currentAccount]);
+
+  // Whenever quests or userStats update, sync back into currentAccount & accounts
+  useEffect(() => {
+    if (!currentAccount) return;
+
+    const updatedAccount: UserAccount = {
+      ...currentAccount,
+      stats: userStats,
+      quests: quests,
+    };
+
+    setAccounts((prev) => {
+      const idx = prev.findIndex((a) => a.id === updatedAccount.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = updatedAccount;
+        return next;
+      }
+      return [...prev, updatedAccount];
+    });
+  }, [quests, userStats]);
+
+  // Login handler
+  const handleLoginSuccess = (account: UserAccount) => {
+    setCurrentAccount(account);
+    setQuests(account.quests || []);
+    setUserStats(account.stats || {
+      name: account.name,
+      title: 'Novice Scholar',
+      level: 1,
+      xp: 0,
+      xpToNextLevel: 500,
+      streak: 1,
+      completedQuestsCount: 0,
+    });
+
+    setAccounts((prev) => {
+      const exists = prev.some((a) => a.id === account.id);
+      if (exists) {
+        return prev.map((a) => (a.id === account.id ? account : a));
+      }
+      return [...prev, account];
+    });
+  };
+
+  // Logout handler
+  const handleLogOut = () => {
+    setCurrentAccount(null);
+  };
+
+  // Switch account
+  const handleSwitchAccount = () => {
+    setCurrentAccount(null);
+  };
 
   // Keep selectedQuest in sync if quests list updates
   useEffect(() => {
@@ -151,7 +291,7 @@ export default function App() {
   };
 
   // Add XP helper & Level Up Check
-  const addXP = (amount: number, message: string = 'Task completed!') => {
+  const addXP = (amount: number, message: string = 'Quest task completed!') => {
     triggerXpToast(amount, message);
     playTaskCompleteSound();
 
@@ -176,6 +316,15 @@ export default function App() {
           level: newLevel,
           title: updatedTitle,
         });
+
+        if (settings.enableConfetti) {
+          confetti({
+            particleCount: 150,
+            spread: 90,
+            origin: { y: 0.5 },
+            colors: ['#725477', '#fcd7ff', '#FFF5BA', '#9ad5a2', '#d5e3ff', '#facc15'],
+          });
+        }
       }
 
       return {
@@ -197,12 +346,14 @@ export default function App() {
     const reward = questToFinish.xpReward || 150;
     addXP(reward, `Conquered "${questToFinish.title}"! (+${reward} EXP)`);
 
-    confetti({
-      particleCount: 100,
-      spread: 75,
-      origin: { y: 0.6 },
-      colors: ['#725477', '#fcd7ff', '#FFF5BA', '#9ad5a2', '#d5e3ff'],
-    });
+    if (settings.enableConfetti) {
+      confetti({
+        particleCount: 100,
+        spread: 75,
+        origin: { y: 0.6 },
+        colors: ['#725477', '#fcd7ff', '#FFF5BA', '#9ad5a2', '#d5e3ff'],
+      });
+    }
 
     // Close detail modal if open for this quest
     if (selectedQuest?.id === questId) {
@@ -231,14 +382,14 @@ export default function App() {
       const allDone = updatedSteps.length > 0 && updatedSteps.every((s) => s.completed);
 
       if (toggledToCompleted) {
-        if (allDone) {
-          // If all steps completed, automatically celebrate and delete quest after brief delay
+        if (allDone && settings.autoCompleteOnAllSteps) {
+          // If all steps completed and auto-complete enabled, automatically celebrate and delete quest
           setTimeout(() => {
             handleCompleteAndRemoveQuest(questId);
           }, 600);
-          addXP(25, 'Final step completed!');
+          addXP(25, 'Final quest step completed!');
         } else {
-          addXP(25, 'Step checked off');
+          addXP(25, 'Quest step checked off');
         }
       }
 
@@ -289,7 +440,7 @@ export default function App() {
   // Create new quest
   const handleCreateQuest = (newQuest: Quest) => {
     setQuests((prev) => [newQuest, ...prev]);
-    addXP(50, 'Created new reminder!');
+    addXP(50, 'Created new quest!');
   };
 
   // Delete a quest manually
@@ -300,13 +451,58 @@ export default function App() {
     setQuests((prev) => prev.filter((q) => q.id !== questId));
   };
 
+  // Update Account Profile from Settings Modal (Name, Age, School, Grade, Avatar)
+  const handleUpdateAccount = (updatedAccount: UserAccount) => {
+    setCurrentAccount(updatedAccount);
+    if (updatedAccount.name !== userStats.name) {
+      setUserStats((prev) => ({ ...prev, name: updatedAccount.name }));
+    }
+    setAccounts((prev) =>
+      prev.map((acc) => (acc.id === updatedAccount.id ? updatedAccount : acc))
+    );
+  };
+
+  // Update App Settings
+  const handleUpdateSettings = (newSettings: AppSettings) => {
+    setSettings(newSettings);
+  };
+
+  // Import Quests handler
+  const handleImportQuests = (importedQuests: Quest[]) => {
+    setQuests(importedQuests);
+    addXP(100, 'Imported study quests successfully!');
+  };
+
+  // Reset Quests handler
+  const handleResetQuests = () => {
+    setQuests(INITIAL_QUESTS);
+    triggerXpToast(0, 'Reset to default study quests');
+  };
+
+  // If not logged in, render the AuthScreen
+  if (!currentAccount) {
+    return (
+      <AuthScreen
+        onLoginSuccess={handleLoginSuccess}
+        existingAccounts={accounts}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#faf9fb] text-[#1a1c1d] flex">
+    <div
+      className={`min-h-screen bg-[#faf9fb] text-[#1a1c1d] flex ${
+        settings.lowPowerMode ? 'low-power-mode' : ''
+      } ${settings.compactMode ? 'compact-ui' : ''}`}
+    >
       {/* Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}
         onSelectTab={(tab) => setCurrentTab(tab)}
         userStats={userStats}
+        currentAccount={currentAccount}
+        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
@@ -316,9 +512,12 @@ export default function App() {
         {/* Top Header */}
         <Header
           userStats={userStats}
+          currentAccount={currentAccount}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenNotifications={() => setIsNotificationsOpen(true)}
           onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onLogOut={handleLogOut}
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           unreadCount={quests.length}
         />
@@ -331,6 +530,7 @@ export default function App() {
             onOpenCalendar={() => setIsCalendarOpen(true)}
             onCompleteAndRemoveQuest={handleCompleteAndRemoveQuest}
             onToggleStepDirect={handleToggleStep}
+            onNavigateCreateQuest={() => setCurrentTab('create-new-quest')}
           />
         ) : (
           <CreateQuest
@@ -377,6 +577,22 @@ export default function App() {
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         userStats={userStats}
+        currentAccount={currentAccount}
+        onLogOut={handleLogOut}
+        onSwitchAccount={handleSwitchAccount}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        currentAccount={currentAccount}
+        settings={settings}
+        quests={quests}
+        onUpdateAccount={handleUpdateAccount}
+        onUpdateSettings={handleUpdateSettings}
+        onImportQuests={handleImportQuests}
+        onResetQuests={handleResetQuests}
       />
 
       <LevelUpModal
@@ -399,3 +615,4 @@ export default function App() {
     </div>
   );
 }
+

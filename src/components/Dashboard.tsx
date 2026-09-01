@@ -8,6 +8,7 @@ interface DashboardProps {
   onOpenCalendar: () => void;
   onCompleteAndRemoveQuest: (questId: string) => void;
   onToggleStepDirect: (questId: string, stepId: string) => void;
+  onNavigateCreateQuest?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -16,6 +17,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenCalendar,
   onCompleteAndRemoveQuest,
   onToggleStepDirect,
+  onNavigateCreateQuest,
 }) => {
   // Live clock tracking state (refreshes every 10 seconds to keep live countdowns and urgency accurate)
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -75,10 +77,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
           <div>
             <h2 className="text-3xl sm:text-[38px] font-bold text-[#1a1c1d] tracking-tight">
-              Today&apos;s Reminders
+              Today&apos;s Quests
             </h2>
             <p className="text-sm sm:text-base font-medium text-[#4c444c] mt-0.5">
-              Finish tasks to earn EXP and clear your agenda!
+              Finish quests to earn EXP and level up your scholar rank!
             </p>
           </div>
 
@@ -103,12 +105,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {todayQuests.length === 0 ? (
           <div className="p-8 rounded-3xl bg-white/80 border border-[#e0bbe4]/30 text-center flex flex-col items-center justify-center shadow-xs">
             <div className="w-16 h-16 rounded-full bg-[#b5f1bc]/40 text-[#18512a] flex items-center justify-center mb-3">
-              <span className="material-symbols-outlined text-[32px]">task_alt</span>
+              <span className="material-symbols-outlined text-[32px]">
+                {quests.length === 0 ? 'add_task' : 'task_alt'}
+              </span>
             </div>
-            <h3 className="text-lg font-bold text-[#1a1c1d]">All Today&apos;s Tasks Completed!</h3>
-            <p className="text-sm text-[#4c444c] max-w-md mt-1">
-              You&apos;ve cleared your reminders for today and earned maximum EXP! Check upcoming deadlines below or hatch a new reminder.
+            <h3 className="text-lg font-bold text-[#1a1c1d]">
+              {quests.length === 0 ? 'No Active Quests' : "All Today's Quests Completed!"}
+            </h3>
+            <p className="text-sm text-[#4c444c] max-w-md mt-1 mb-4">
+              {quests.length === 0
+                ? 'Your study board is fresh and ready. Hatch a new homework, project, or exam quest to start earning EXP!'
+                : "You've conquered all your quests for today and earned maximum EXP! Check upcoming deadlines below or hatch a new quest."}
             </p>
+            {onNavigateCreateQuest && (
+              <button
+                onClick={onNavigateCreateQuest}
+                className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs bg-[#725477] text-white hover:bg-[#593d5f] flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                <span>Hatch New Quest</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

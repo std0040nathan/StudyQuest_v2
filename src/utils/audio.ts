@@ -1,6 +1,11 @@
-// Web Audio API Synthesizer for pleasant pastel audio feedback
+let soundEffectsEnabled = true;
 
-export const playTaskCompleteSound = () => {
+export const setSoundEffectsEnabled = (enabled: boolean) => {
+  soundEffectsEnabled = enabled;
+};
+
+export const playTaskCompleteSound = (enabled = soundEffectsEnabled) => {
+  if (!enabled) return;
   try {
     const AudioCtx =
       window.AudioContext ||
@@ -32,7 +37,8 @@ export const playTaskCompleteSound = () => {
   }
 };
 
-export const playLevelUpSound = () => {
+export const playLevelUpSound = (enabled = soundEffectsEnabled) => {
+  if (!enabled) return;
   try {
     const AudioCtx =
       window.AudioContext ||
@@ -71,7 +77,8 @@ export const playLevelUpSound = () => {
   }
 };
 
-export const playAlarmSound = () => {
+export const playAlarmSound = (enabled = soundEffectsEnabled) => {
+  if (!enabled) return;
   try {
     const AudioCtx =
       window.AudioContext ||

@@ -1,10 +1,13 @@
 import React from 'react';
-import { UserStats } from '../types';
+import { UserStats, UserAccount } from '../types';
 
 interface SidebarProps {
   currentTab: 'dashboard' | 'create-new-quest';
   onSelectTab: (tab: 'dashboard' | 'create-new-quest') => void;
   userStats: UserStats;
+  currentAccount?: UserAccount | null;
+  onOpenProfile?: () => void;
+  onOpenSettings?: () => void;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
 }
@@ -13,6 +16,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onSelectTab,
   userStats,
+  currentAccount,
+  onOpenProfile,
+  onOpenSettings,
   isMobileOpen = false,
   onCloseMobile,
 }) => {
@@ -92,22 +98,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </span>
             <span className="font-['Quicksand'] text-[16px]">Create New Quest</span>
           </button>
+
+          {/* Option 3: Settings */}
+          {onOpenSettings && (
+            <button
+              id="nav-btn-settings"
+              onClick={() => {
+                onOpenSettings();
+                if (onCloseMobile) onCloseMobile();
+              }}
+              className="w-full flex items-center px-6 py-4 rounded-xl transition-all duration-200 group text-left text-[#4c444c] hover:bg-[#e0bbe4]/30 hover:text-[#725477] font-medium"
+            >
+              <span className="material-symbols-outlined mr-5 text-[22px] transition-transform group-active:scale-95">
+                settings
+              </span>
+              <span className="font-['Quicksand'] text-[16px]">Settings</span>
+            </button>
+          )}
         </nav>
 
         {/* User Status / Explorer Mode Card */}
         <div className="px-4 pb-8">
           <div
             id="user-status-card"
-            className="p-4 rounded-2xl bg-[#e0bbe4]/35 border border-[#e0bbe4]/50 shadow-sm flex flex-col gap-2.5 transition-all hover:bg-[#e0bbe4]/50"
+            onClick={onOpenProfile}
+            className="p-4 rounded-2xl bg-[#e0bbe4]/35 border border-[#e0bbe4]/50 shadow-sm flex flex-col gap-2.5 transition-all hover:bg-[#e0bbe4]/50 cursor-pointer group/user"
+            title="Click to view full student profile"
           >
             <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-full bg-[#725477] flex items-center justify-center shrink-0 shadow-md shadow-[#725477]/20">
-                <span className="material-symbols-outlined text-white text-[19px]">
-                  person
+              <div
+                className={`w-9 h-9 rounded-full ${
+                  currentAccount?.avatarColor || 'bg-[#725477] text-white'
+                } flex items-center justify-center shrink-0 shadow-md shadow-[#725477]/20`}
+              >
+                <span className="material-symbols-outlined text-[19px]">
+                  {currentAccount?.avatarIcon || 'person'}
                 </span>
               </div>
               <div className="overflow-hidden flex-1">
-                <p className="text-[14px] font-bold text-[#66496b] truncate">
+                <p className="text-[14px] font-bold text-[#66496b] truncate group-hover/user:underline">
                   {userStats.title}
                 </p>
                 <div className="flex items-center justify-between text-[11px] text-[#66496b]/80 uppercase tracking-wider font-bold">
@@ -130,3 +159,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+
