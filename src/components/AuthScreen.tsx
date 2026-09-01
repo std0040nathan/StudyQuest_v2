@@ -27,7 +27,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   onLoginSuccess,
   existingAccounts,
 }) => {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
 
   // Sign In form fields
   const [loginEmail, setLoginEmail] = useState('');
@@ -307,6 +307,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             <button
               type="button"
               onClick={() => {
+                setMode('signup');
+                setErrorMsg('');
+              }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                mode === 'signup'
+                  ? 'bg-white text-[#725477] shadow-xs'
+                  : 'text-[#4c444c] hover:text-[#1a1c1d]'
+              }`}
+            >
+              Create Account
+            </button>
+            <button
+              type="button"
+              onClick={() => {
                 setMode('signin');
                 setErrorMsg('');
               }}
@@ -317,20 +331,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               }`}
             >
               Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('signup');
-                setErrorMsg('');
-              }}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                mode === 'signup'
-                  ? 'bg-white text-[#725477] shadow-xs'
-                  : 'text-[#4c444c] hover:text-[#1a1c1d]'
-              }`}
-            >
-              New Student
             </button>
           </div>
         </div>
@@ -366,7 +366,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="e.g. nobody or student@school.edu"
+                    placeholder="e.g. student@school.edu or username"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-sm text-[#1a1c1d] font-medium transition-all"
                   />
                 </div>
@@ -450,7 +450,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. nobody"
+                    placeholder="e.g. Alex Chen"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-sm text-[#1a1c1d] font-medium transition-all"
                   />
                 </div>

@@ -136,12 +136,9 @@ const sanitizeAccount = (account: UserAccount): UserAccount => {
   return account;
 };
 
-// Helper to scan all historical storage keys so user NEVER loses quests across app updates
+// Helper to scan all historical storage keys so user accounts are safely retrieved
 const loadAllPersistedAccounts = (): UserAccount[] => {
   const accountsMap = new Map<string, UserAccount>();
-
-  // Insert default nobody account first
-  accountsMap.set(DEFAULT_INITIAL_ACCOUNT.id, DEFAULT_INITIAL_ACCOUNT);
 
   for (const key of FALLBACK_ACCOUNT_KEYS) {
     try {
@@ -163,7 +160,6 @@ const loadAllPersistedAccounts = (): UserAccount[] => {
                   accountsMap.set(sanitized.id, {
                     ...existing,
                     ...sanitized,
-                    name: 'nobody',
                     quests: sanitized.quests && sanitized.quests.length > 0 ? sanitized.quests : existing.quests,
                     stats: sanitized.stats || existing.stats,
                   });
@@ -178,39 +174,11 @@ const loadAllPersistedAccounts = (): UserAccount[] => {
     }
   }
 
-  // Also check if standalone quests were stored under old quest key
-  try {
-    const rawQuests = localStorage.getItem('studyquest_quests');
-    if (rawQuests) {
-      const parsedQuests = JSON.parse(rawQuests);
-      if (Array.isArray(parsedQuests) && parsedQuests.length > 0) {
-        const nobodyAcc = accountsMap.get(DEFAULT_INITIAL_ACCOUNT.id) || DEFAULT_INITIAL_ACCOUNT;
-        if (!nobodyAcc.quests || nobodyAcc.quests.length === 0) {
-          nobodyAcc.quests = parsedQuests;
-          accountsMap.set(nobodyAcc.id, nobodyAcc);
-        }
-      }
-    }
-  } catch (e) {
-    console.debug('Info reading standalone quests', e);
-  }
-
   return Array.from(accountsMap.values());
 };
 
-// Helper to load initial active account (always defaults instantly to nobody)
-const loadInitialActiveAccount = (allAccounts: UserAccount[]): UserAccount => {
-  // Always find nobody first!
-  const nobody = allAccounts.find(
-    (a) =>
-      a.id === 'user-nobody' ||
-      a.name.toLowerCase().includes('nobody') ||
-      a.email?.toLowerCase().includes('nobody') ||
-      a.id === 'user-bobby-jr-the-third' ||
-      a.name.toLowerCase().includes('bobby')
-  );
-  if (nobody) return nobody;
-
+// Helper to load initial active account - returns null if not logged in so users land directly on create account
+const loadInitialActiveAccount = (allAccounts: UserAccount[]): UserAccount | null => {
   let activeId: string | null = null;
   for (const key of FALLBACK_ACTIVE_KEYS) {
     const val = localStorage.getItem(key);
@@ -220,12 +188,12 @@ const loadInitialActiveAccount = (allAccounts: UserAccount[]): UserAccount => {
     }
   }
 
-  if (activeId) {
+  if (activeId && activeId !== 'user-nobody' && activeId !== 'user-bobby-jr-the-third') {
     const found = allAccounts.find((a) => a.id === activeId);
     if (found) return found;
   }
 
-  return allAccounts[0] || DEFAULT_INITIAL_ACCOUNT;
+  return null;
 };
 
 export default function App() {
@@ -234,7 +202,7 @@ export default function App() {
     return loadAllPersistedAccounts();
   });
 
-  // Current active user account (always defaults instantly to nobody)
+  // Current active user account (starts as null to show Create Account section)
   const [currentAccount, setCurrentAccount] = useState<UserAccount | null>(() => {
     const initialAccounts = loadAllPersistedAccounts();
     return loadInitialActiveAccount(initialAccounts);
@@ -263,16 +231,15 @@ export default function App() {
   });
 
   const [userStats, setUserStats] = useState<UserStats>(() => {
-    const active = currentAccount || loadInitialActiveAccount(loadAllPersistedAccounts());
-    if (active?.stats) {
+    if (currentAccount?.stats) {
       return {
-        ...active.stats,
-        name: active.name || 'nobody',
+        ...currentAccount.stats,
+        name: currentAccount.name || 'Scholar',
       };
     }
     return {
       ...INITIAL_USER_STATS,
-      name: active?.name || 'nobody',
+      name: currentAccount?.name || 'Scholar',
     };
   });
 
