@@ -48,7 +48,7 @@ export async function saveAccountToCloud(account: UserAccount): Promise<boolean>
     await setDoc(accountRef, dataToSave, { merge: true });
     return true;
   } catch (err) {
-    console.warn('Cloud sync save error:', err);
+    console.debug('Cloud sync save info:', err);
     return false;
   }
 }
@@ -69,7 +69,7 @@ export async function fetchAllCloudAccounts(): Promise<UserAccount[]> {
     });
     return accounts;
   } catch (err) {
-    console.warn('Could not fetch cloud accounts:', err);
+    console.debug('Could not fetch cloud accounts info:', err);
     return [];
   }
 }
@@ -110,7 +110,7 @@ export async function findCloudAccountByEmailOrName(identifier: string): Promise
 
     return null;
   } catch (err) {
-    console.warn('Cloud lookup error:', err);
+    console.debug('Cloud lookup info:', err);
     return null;
   }
 }
@@ -132,7 +132,7 @@ export function subscribeToCloudAccount(
       }
     },
     (error) => {
-      console.warn('Cloud subscription listener warning:', error);
+      console.debug('Cloud subscription listener info:', error);
     }
   );
 }
@@ -146,7 +146,7 @@ export async function updateQuestsInCloud(accountId: string, quests: Quest[]): P
     await setDoc(accountRef, { quests, updatedAt: new Date().toISOString() }, { merge: true });
     return true;
   } catch (err) {
-    console.warn('Cloud quests update warning:', err);
+    console.debug('Cloud quests update info:', err);
     return false;
   }
 }
@@ -160,7 +160,7 @@ export async function updateStatsInCloud(accountId: string, stats: UserStats): P
     await setDoc(accountRef, { stats, updatedAt: new Date().toISOString() }, { merge: true });
     return true;
   } catch (err) {
-    console.warn('Cloud stats update warning:', err);
+    console.debug('Cloud stats update info:', err);
     return false;
   }
 }
@@ -177,7 +177,7 @@ export async function updateSettingsInCloud(
     await setDoc(accountRef, { settings, updatedAt: new Date().toISOString() }, { merge: true });
     return true;
   } catch (err) {
-    console.warn('Cloud settings update warning:', err);
+    console.debug('Cloud settings update info:', err);
     return false;
   }
 }
@@ -190,7 +190,7 @@ export async function deleteAccountFromCloud(accountId: string): Promise<boolean
     await deleteDoc(doc(db, ACCOUNTS_COLLECTION, accountId));
     return true;
   } catch (err) {
-    console.warn('Cloud delete warning:', err);
+    console.debug('Cloud delete info:', err);
     return false;
   }
 }

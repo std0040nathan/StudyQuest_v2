@@ -457,7 +457,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Bobby Jr. the third"
+                    placeholder="e.g. nobody"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm font-medium"
                   />
                 </div>

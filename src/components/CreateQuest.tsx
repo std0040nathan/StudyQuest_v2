@@ -395,7 +395,6 @@ export const CreateQuest: React.FC<CreateQuestProps> = ({
             {/* Quest Type */}
             <div className="flex flex-col gap-2 group">
               <label
-                htmlFor="tor"
                 className="text-xs font-bold text-[#4c444c] group-focus-within:text-theme-primary transition-colors"
               >
                 Quest Category / Type

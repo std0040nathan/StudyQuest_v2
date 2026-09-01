@@ -84,7 +84,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           setAllAccounts(uniqueList);
         }
       } catch (err) {
-        console.warn('Initial cloud accounts fetch note:', err);
+        console.debug('Initial cloud accounts fetch info:', err);
       } finally {
         if (isMounted) setIsSyncingCloud(false);
       }
@@ -366,7 +366,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="e.g. Bobby Jr. the third or student@school.edu"
+                    placeholder="e.g. nobody or student@school.edu"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-sm text-[#1a1c1d] font-medium transition-all"
                   />
                 </div>
@@ -450,7 +450,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Bobby Jr. the third"
+                    placeholder="e.g. nobody"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-sm text-[#1a1c1d] font-medium transition-all"
                   />
                 </div>

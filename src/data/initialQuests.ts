@@ -1,7 +1,7 @@
 import { Quest, UserStats } from '../types';
 
 export const INITIAL_USER_STATS: UserStats = {
-  name: 'Bobby Jr. the third',
+  name: 'nobody',
   title: 'Explorer Mode',
   level: 1,
   xp: 0,

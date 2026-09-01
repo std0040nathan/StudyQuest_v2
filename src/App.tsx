@@ -87,9 +87,9 @@ const getTitleForLevel = (level: number) => {
 };
 
 const DEFAULT_INITIAL_ACCOUNT: UserAccount = {
-  id: 'user-bobby-jr-the-third',
-  name: 'Bobby Jr. the third',
-  email: 'bobby.jr3@studyquest.edu',
+  id: 'user-nobody',
+  name: 'nobody',
+  email: 'nobody@studyquest.edu',
   age: 11,
   school: 'Bina Bangsa School',
   grade: 'Grade 5',
@@ -100,32 +100,35 @@ const DEFAULT_INITIAL_ACCOUNT: UserAccount = {
   createdAt: new Date().toISOString(),
 };
 
-// Helper to sanitize any legacy accounts and ensure Bobby Jr. the third is the primary scholar
+// Helper to sanitize any legacy accounts and ensure nobody is the primary scholar
 const sanitizeAccount = (account: UserAccount): UserAccount => {
-  const isNathan =
+  const isLegacy =
     account.id?.toLowerCase().includes('nathan') ||
     account.name?.toLowerCase().includes('nathan') ||
-    account.email?.toLowerCase().includes('nathan');
+    account.email?.toLowerCase().includes('nathan') ||
+    account.id === 'user-bobby-jr-the-third' ||
+    account.name?.toLowerCase().includes('bobby') ||
+    account.email?.toLowerCase().includes('bobby');
 
-  if (isNathan) {
+  if (isLegacy) {
     return {
       ...account,
-      id: 'user-bobby-jr-the-third',
-      name: 'Bobby Jr. the third',
-      email: 'bobby.jr3@studyquest.edu',
+      id: 'user-nobody',
+      name: 'nobody',
+      email: 'nobody@studyquest.edu',
       stats: {
         ...(account.stats || INITIAL_USER_STATS),
-        name: 'Bobby Jr. the third',
+        name: 'nobody',
       },
     };
   }
 
-  if (account.stats && (!account.stats.name || account.stats.name.toLowerCase().includes('nathan'))) {
+  if (account.stats && (!account.stats.name || account.stats.name.toLowerCase().includes('nathan') || account.stats.name.toLowerCase().includes('bobby'))) {
     return {
       ...account,
       stats: {
         ...account.stats,
-        name: account.name || 'Bobby Jr. the third',
+        name: account.name || 'nobody',
       },
     };
   }
@@ -137,7 +140,7 @@ const sanitizeAccount = (account: UserAccount): UserAccount => {
 const loadAllPersistedAccounts = (): UserAccount[] => {
   const accountsMap = new Map<string, UserAccount>();
 
-  // Insert default Bobby Jr account first
+  // Insert default nobody account first
   accountsMap.set(DEFAULT_INITIAL_ACCOUNT.id, DEFAULT_INITIAL_ACCOUNT);
 
   for (const key of FALLBACK_ACCOUNT_KEYS) {
@@ -160,7 +163,7 @@ const loadAllPersistedAccounts = (): UserAccount[] => {
                   accountsMap.set(sanitized.id, {
                     ...existing,
                     ...sanitized,
-                    name: 'Bobby Jr. the third',
+                    name: 'nobody',
                     quests: sanitized.quests && sanitized.quests.length > 0 ? sanitized.quests : existing.quests,
                     stats: sanitized.stats || existing.stats,
                   });
@@ -171,7 +174,7 @@ const loadAllPersistedAccounts = (): UserAccount[] => {
         }
       }
     } catch (e) {
-      console.warn('Error reading key', key, e);
+      console.debug('Info reading key', key, e);
     }
   }
 
@@ -181,30 +184,32 @@ const loadAllPersistedAccounts = (): UserAccount[] => {
     if (rawQuests) {
       const parsedQuests = JSON.parse(rawQuests);
       if (Array.isArray(parsedQuests) && parsedQuests.length > 0) {
-        const bobby = accountsMap.get(DEFAULT_INITIAL_ACCOUNT.id) || DEFAULT_INITIAL_ACCOUNT;
-        if (!bobby.quests || bobby.quests.length === 0) {
-          bobby.quests = parsedQuests;
-          accountsMap.set(bobby.id, bobby);
+        const nobodyAcc = accountsMap.get(DEFAULT_INITIAL_ACCOUNT.id) || DEFAULT_INITIAL_ACCOUNT;
+        if (!nobodyAcc.quests || nobodyAcc.quests.length === 0) {
+          nobodyAcc.quests = parsedQuests;
+          accountsMap.set(nobodyAcc.id, nobodyAcc);
         }
       }
     }
   } catch (e) {
-    console.warn('Error reading standalone quests', e);
+    console.debug('Info reading standalone quests', e);
   }
 
   return Array.from(accountsMap.values());
 };
 
-// Helper to load initial active account (always defaults instantly to Bobby Jr. the third)
+// Helper to load initial active account (always defaults instantly to nobody)
 const loadInitialActiveAccount = (allAccounts: UserAccount[]): UserAccount => {
-  // Always find Bobby Jr. the third first!
-  const bobby = allAccounts.find(
+  // Always find nobody first!
+  const nobody = allAccounts.find(
     (a) =>
+      a.id === 'user-nobody' ||
+      a.name.toLowerCase().includes('nobody') ||
+      a.email?.toLowerCase().includes('nobody') ||
       a.id === 'user-bobby-jr-the-third' ||
-      a.name.toLowerCase().includes('bobby jr') ||
-      a.email?.toLowerCase().includes('bobby.jr')
+      a.name.toLowerCase().includes('bobby')
   );
-  if (bobby) return bobby;
+  if (nobody) return nobody;
 
   let activeId: string | null = null;
   for (const key of FALLBACK_ACTIVE_KEYS) {
@@ -229,7 +234,7 @@ export default function App() {
     return loadAllPersistedAccounts();
   });
 
-  // Current active user account (always defaults instantly to Bobby Jr. the third)
+  // Current active user account (always defaults instantly to nobody)
   const [currentAccount, setCurrentAccount] = useState<UserAccount | null>(() => {
     const initialAccounts = loadAllPersistedAccounts();
     return loadInitialActiveAccount(initialAccounts);
@@ -262,12 +267,12 @@ export default function App() {
     if (active?.stats) {
       return {
         ...active.stats,
-        name: active.name || 'Bobby Jr. the third',
+        name: active.name || 'nobody',
       };
     }
     return {
       ...INITIAL_USER_STATS,
-      name: active?.name || 'Bobby Jr. the third',
+      name: active?.name || 'nobody',
     };
   });
 
@@ -388,7 +393,7 @@ export default function App() {
                 setUserStats((prev) => ({
                   ...prev,
                   ...remoteActive.stats,
-                  name: 'Bobby Jr. the third',
+                  name: remoteActive.name || 'nobody',
                 }));
               }
             }
@@ -397,7 +402,7 @@ export default function App() {
         hasLoadedInitialCloudDataRef.current = true;
       })
       .catch((err) => {
-        console.warn('Cloud sync on start note:', err);
+        console.debug('Cloud sync on start info:', err);
         hasLoadedInitialCloudDataRef.current = true;
       });
 

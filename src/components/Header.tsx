@@ -24,6 +24,12 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleMobileMenu,
   unreadCount = 0,
 }) => {
+  const isNobody =
+    userStats.name.toLowerCase().includes('nobody') ||
+    (currentAccount?.name && currentAccount.name.toLowerCase().includes('nobody')) ||
+    currentAccount?.id === 'user-nobody' ||
+    userStats.name.toLowerCase().includes('bobby');
+
   return (
     <header
       id="app-header"
@@ -33,24 +39,30 @@ export const Header: React.FC<HeaderProps> = ({
       className="fixed top-0 left-0 lg:left-72 right-0 h-20 bg-[#faf9fb]/70 backdrop-blur-xl z-40 px-6 sm:px-12 lg:px-16 flex items-center justify-between border-b"
     >
       {/* Title & Greeting / Mobile Hamburger */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0 pr-2">
         {onToggleMobileMenu && (
           <button
             onClick={onToggleMobileMenu}
             style={{ color: 'var(--theme-primary)' }}
-            className="lg:hidden p-2 rounded-xl hover:bg-black/5 transition-colors"
+            className="lg:hidden p-2 rounded-xl hover:bg-black/5 transition-colors shrink-0"
             aria-label="Toggle menu"
           >
             <span className="material-symbols-outlined text-[24px]">menu</span>
           </button>
         )}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           <h1
             style={{ color: 'var(--theme-primary)' }}
-            className="text-lg sm:text-xl lg:text-[22px] font-bold flex items-center gap-1.5 tracking-tight"
+            className="text-sm sm:text-base md:text-lg lg:text-[20px] font-bold flex items-center gap-1.5 tracking-tight leading-snug"
           >
-            <span>Welcome back, {userStats.name}</span>
-            <span className="material-symbols-outlined text-[#facc15] text-[20px] sm:text-[22px] drop-shadow-sm select-none">
+            {isNobody ? (
+              <span className="truncate sm:whitespace-normal">
+                Please log in unless you wish to stay in nobody’s account
+              </span>
+            ) : (
+              <span>Welcome back, {userStats.name}</span>
+            )}
+            <span className="material-symbols-outlined text-[#facc15] text-[18px] sm:text-[22px] drop-shadow-sm select-none shrink-0">
               stars
             </span>
           </h1>
@@ -60,6 +72,15 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="material-symbols-outlined text-[13px] text-green-600">cloud_done</span>
               <span>Synced</span>
             </span>
+            {isNobody && onLogOut && (
+              <button
+                onClick={onLogOut}
+                className="text-[11px] font-bold text-[#725477] hover:underline underline-offset-2 flex items-center gap-0.5 ml-1"
+                title="Switch to another account"
+              >
+                <span>(Switch Account)</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
