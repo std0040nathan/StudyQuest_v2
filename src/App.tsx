@@ -100,11 +100,36 @@ const DEFAULT_INITIAL_ACCOUNT: UserAccount = {
   createdAt: new Date().toISOString(),
 };
 
-// Helper to sanitize any accidental personal email in local storage
+// Helper to sanitize any legacy accounts and ensure Bobby Jr. the third is the primary scholar
 const sanitizeAccount = (account: UserAccount): UserAccount => {
-  if (account.email && account.email.includes('std0040.nathan')) {
-    return { ...account, email: 'scholar@studyquest.edu' };
+  const isNathan =
+    account.id?.toLowerCase().includes('nathan') ||
+    account.name?.toLowerCase().includes('nathan') ||
+    account.email?.toLowerCase().includes('nathan');
+
+  if (isNathan) {
+    return {
+      ...account,
+      id: 'user-bobby-jr-the-third',
+      name: 'Bobby Jr. the third',
+      email: 'bobby.jr3@studyquest.edu',
+      stats: {
+        ...(account.stats || INITIAL_USER_STATS),
+        name: 'Bobby Jr. the third',
+      },
+    };
   }
+
+  if (account.stats && (!account.stats.name || account.stats.name.toLowerCase().includes('nathan'))) {
+    return {
+      ...account,
+      stats: {
+        ...account.stats,
+        name: account.name || 'Bobby Jr. the third',
+      },
+    };
+  }
+
   return account;
 };
 
@@ -135,7 +160,9 @@ const loadAllPersistedAccounts = (): UserAccount[] => {
                   accountsMap.set(sanitized.id, {
                     ...existing,
                     ...sanitized,
+                    name: 'Bobby Jr. the third',
                     quests: sanitized.quests && sanitized.quests.length > 0 ? sanitized.quests : existing.quests,
+                    stats: sanitized.stats || existing.stats,
                   });
                 }
               }
@@ -168,8 +195,17 @@ const loadAllPersistedAccounts = (): UserAccount[] => {
   return Array.from(accountsMap.values());
 };
 
-// Helper to load initial active account (always defaults to Bobby Jr. the third)
+// Helper to load initial active account (always defaults instantly to Bobby Jr. the third)
 const loadInitialActiveAccount = (allAccounts: UserAccount[]): UserAccount => {
+  // Always find Bobby Jr. the third first!
+  const bobby = allAccounts.find(
+    (a) =>
+      a.id === 'user-bobby-jr-the-third' ||
+      a.name.toLowerCase().includes('bobby jr') ||
+      a.email?.toLowerCase().includes('bobby.jr')
+  );
+  if (bobby) return bobby;
+
   let activeId: string | null = null;
   for (const key of FALLBACK_ACTIVE_KEYS) {
     const val = localStorage.getItem(key);
@@ -183,12 +219,6 @@ const loadInitialActiveAccount = (allAccounts: UserAccount[]): UserAccount => {
     const found = allAccounts.find((a) => a.id === activeId);
     if (found) return found;
   }
-
-  // Find Bobby Jr. the third by name or ID
-  const bobby = allAccounts.find(
-    (a) => a.id === 'user-bobby-jr-the-third' || a.name.toLowerCase().includes('bobby jr')
-  );
-  if (bobby) return bobby;
 
   return allAccounts[0] || DEFAULT_INITIAL_ACCOUNT;
 };
@@ -228,7 +258,17 @@ export default function App() {
   });
 
   const [userStats, setUserStats] = useState<UserStats>(() => {
-    return currentAccount?.stats || INITIAL_USER_STATS;
+    const active = currentAccount || loadInitialActiveAccount(loadAllPersistedAccounts());
+    if (active?.stats) {
+      return {
+        ...active.stats,
+        name: active.name || 'Bobby Jr. the third',
+      };
+    }
+    return {
+      ...INITIAL_USER_STATS,
+      name: active?.name || 'Bobby Jr. the third',
+    };
   });
 
   // Modals state
@@ -312,10 +352,11 @@ export default function App() {
       .then((cloudAccounts) => {
         if (!isMounted) return;
         if (cloudAccounts.length > 0) {
+          const sanitizedCloud = cloudAccounts.map(sanitizeAccount);
           setAccounts((prev) => {
             const map = new Map<string, UserAccount>();
             prev.forEach((a) => map.set(a.id, a));
-            cloudAccounts.forEach((ca) => {
+            sanitizedCloud.forEach((ca) => {
               const existing = map.get(ca.id);
               if (!existing) {
                 map.set(ca.id, ca);
@@ -336,7 +377,7 @@ export default function App() {
 
           // If currentAccount is active, ensure we load any remote quests if local has none
           if (currentAccount) {
-            const remoteActive = cloudAccounts.find(
+            const remoteActive = sanitizedCloud.find(
               (a) => a.id === currentAccount.id || a.name.toLowerCase() === currentAccount.name.toLowerCase()
             );
             if (remoteActive) {
@@ -344,7 +385,11 @@ export default function App() {
                 setQuests(remoteActive.quests);
               }
               if (remoteActive.stats) {
-                setUserStats(remoteActive.stats);
+                setUserStats((prev) => ({
+                  ...prev,
+                  ...remoteActive.stats,
+                  name: 'Bobby Jr. the third',
+                }));
               }
             }
           }
