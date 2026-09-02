@@ -22,6 +22,7 @@ import {
   saveAccountToCloud,
   subscribeToCloudAccount,
   fetchAllCloudAccounts,
+  deleteAccountFromCloud,
 } from './utils/firebase';
 
 const PRIMARY_STORAGE_KEY_ACCOUNTS = 'studyquest_master_accounts_v1';
@@ -472,11 +473,84 @@ export default function App() {
   // Logout handler
   const handleLogOut = () => {
     setCurrentAccount(null);
+    for (const key of FALLBACK_ACTIVE_KEYS) {
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {}
+    }
   };
 
   // Switch account
   const handleSwitchAccount = () => {
     setCurrentAccount(null);
+    for (const key of FALLBACK_ACTIVE_KEYS) {
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {}
+    }
+  };
+
+  // Delete account handler - removes from Cloud Firestore database and local storage
+  const handleDeleteAccount = async (targetAccountId: string, targetEmail?: string): Promise<boolean> => {
+    try {
+      const emailToDelete = targetEmail || accounts.find((a) => a.id === targetAccountId)?.email || '';
+      const cleanEmail = emailToDelete.trim().toLowerCase();
+
+      // 1. Delete from Cloud Firestore database
+      await deleteAccountFromCloud(targetAccountId, emailToDelete);
+
+      // 2. Remove from local accounts list
+      const remainingAccounts = accounts.filter(
+        (a) => a.id !== targetAccountId && (!cleanEmail || a.email?.trim().toLowerCase() !== cleanEmail)
+      );
+      setAccounts(remainingAccounts);
+
+      // 3. Update localStorage fallback keys
+      const accountsJson = JSON.stringify(remainingAccounts);
+      for (const key of FALLBACK_ACCOUNT_KEYS) {
+        try {
+          localStorage.setItem(key, accountsJson);
+        } catch (e) {}
+      }
+
+      // 4. If target account was currently active, reset session and return to Create Account screen
+      const isCurrentlyActive =
+        currentAccount?.id === targetAccountId ||
+        (cleanEmail && currentAccount?.email?.trim().toLowerCase() === cleanEmail);
+
+      if (isCurrentlyActive) {
+        setCurrentAccount(null);
+        setQuests([]);
+        setUserStats({
+          name: 'Scholar',
+          title: 'Novice Scholar',
+          level: 1,
+          xp: 0,
+          xpToNextLevel: 500,
+          streak: 1,
+          completedQuestsCount: 0,
+        });
+
+        for (const key of FALLBACK_ACTIVE_KEYS) {
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {}
+        }
+        try {
+          localStorage.removeItem('studyquest_quests');
+          localStorage.removeItem('studyquest_user_stats');
+        } catch (e) {}
+
+        setIsSettingsOpen(false);
+        setIsProfileOpen(false);
+        setSelectedQuest(null);
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+      return false;
+    }
   };
 
   // Keep selectedQuest in sync if quests list updates
@@ -812,6 +886,7 @@ export default function App() {
         onLogOut={handleLogOut}
         onSwitchAccount={handleSwitchAccount}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onDeleteAccount={handleDeleteAccount}
       />
 
       <SettingsModal
@@ -824,6 +899,7 @@ export default function App() {
         onUpdateSettings={handleUpdateSettings}
         onImportQuests={handleImportQuests}
         onResetQuests={handleResetQuests}
+        onDeleteAccount={handleDeleteAccount}
       />
 
       <LevelUpModal

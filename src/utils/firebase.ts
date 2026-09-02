@@ -183,14 +183,115 @@ export async function updateSettingsInCloud(
 }
 
 /**
- * Delete account from cloud
+ * Error handling helper conforming to Firestore skill guidelines
  */
-export async function deleteAccountFromCloud(accountId: string): Promise<boolean> {
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: null,
+      email: null,
+      emailVerified: false,
+      isAnonymous: true,
+      tenantId: null,
+      providerInfo: [],
+    },
+    operationType,
+    path,
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  return errInfo;
+}
+
+/**
+ * Permanently delete account and all database records from Cloud Firestore.
+ * Removes documents matching the account ID or email address so that
+ * the user can register a new account with the same email.
+ */
+export async function deleteAccountFromCloud(accountId: string, email?: string): Promise<boolean> {
+  const cleanEmail = email?.trim().toLowerCase();
+  let deletedCount = 0;
+
   try {
-    await deleteDoc(doc(db, ACCOUNTS_COLLECTION, accountId));
+    // 1. Delete by direct account ID if provided
+    if (accountId) {
+      try {
+        const directDocRef = doc(db, ACCOUNTS_COLLECTION, accountId);
+        await deleteDoc(directDocRef);
+        deletedCount++;
+      } catch (err) {
+        console.debug('Error deleting account doc by ID:', err);
+      }
+
+      try {
+        const userDocRef = doc(db, 'users', accountId);
+        await deleteDoc(userDocRef);
+      } catch (err) {
+        // Ignored if users collection does not have this doc
+      }
+    }
+
+    // 2. Query and delete all documents in 'accounts' matching the exact email
+    if (email?.trim()) {
+      try {
+        const accountsRef = collection(db, ACCOUNTS_COLLECTION);
+        const emailQuery = query(accountsRef, where('email', '==', email.trim()));
+        const snap = await getDocs(emailQuery);
+        for (const docSnap of snap.docs) {
+          await deleteDoc(doc(db, ACCOUNTS_COLLECTION, docSnap.id));
+          deletedCount++;
+        }
+      } catch (err) {
+        console.debug('Error querying accounts by email for deletion:', err);
+      }
+    }
+
+    // 3. Fallback scan all docs in 'accounts' to catch case-insensitive or name-matching documents
+    try {
+      const allAccountsSnap = await getDocs(collection(db, ACCOUNTS_COLLECTION));
+      for (const docSnap of allAccountsSnap.docs) {
+        const data = docSnap.data() as UserAccount;
+        const matchesId = accountId && docSnap.id === accountId;
+        const matchesEmail = cleanEmail && data.email && data.email.trim().toLowerCase() === cleanEmail;
+        if (matchesId || matchesEmail) {
+          await deleteDoc(doc(db, ACCOUNTS_COLLECTION, docSnap.id));
+          deletedCount++;
+        }
+      }
+    } catch (err) {
+      console.debug('Error in broad scan accounts deletion:', err);
+    }
+
     return true;
   } catch (err) {
-    console.debug('Cloud delete info:', err);
-    return false;
+    handleFirestoreError(err, OperationType.DELETE, `${ACCOUNTS_COLLECTION}/${accountId}`);
+    return deletedCount > 0;
   }
 }
+

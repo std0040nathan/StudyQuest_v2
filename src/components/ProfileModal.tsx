@@ -9,6 +9,7 @@ interface ProfileModalProps {
   onLogOut?: () => void;
   onSwitchAccount?: () => void;
   onOpenSettings?: () => void;
+  onDeleteAccount?: (accountId: string, email?: string) => Promise<boolean> | void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({
@@ -19,8 +20,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onLogOut,
   onSwitchAccount,
   onOpenSettings,
+  onDeleteAccount,
 }) => {
+  const [isConfirmingDelete, setIsConfirmingDelete] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
   if (!isOpen) return null;
+
+  const handleDelete = async () => {
+    if (!currentAccount || !onDeleteAccount) return;
+    setIsDeleting(true);
+    try {
+      await onDeleteAccount(currentAccount.id, currentAccount.email);
+      onClose();
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      setIsDeleting(false);
+    }
+  };
 
   const badges = [
     { title: 'Homework Slayer', icon: 'menu_book', color: 'bg-[#d5e3ff] text-[#001c3b]', desc: 'Completed 15+ homework tasks' },
@@ -188,10 +205,21 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   onClose();
                   onLogOut();
                 }}
-                className="px-2.5 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all flex items-center gap-1"
+                className="px-2.5 py-2 text-xs font-bold text-[#4c444c] hover:bg-black/5 rounded-xl transition-all flex items-center gap-1"
               >
                 <span className="material-symbols-outlined text-[16px]">logout</span>
                 <span>Log Out</span>
+              </button>
+            )}
+            {onDeleteAccount && (
+              <button
+                type="button"
+                onClick={() => setIsConfirmingDelete(true)}
+                className="px-2.5 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all flex items-center gap-1"
+                title="Permanently delete account and database records"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                <span>Delete</span>
               </button>
             )}
           </div>
@@ -206,6 +234,54 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             Done
           </button>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        {isConfirmingDelete && (
+          <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-red-200 p-5 space-y-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+                <span className="material-symbols-outlined text-[28px]">warning</span>
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-[#1a1c1d]">Delete Account & Database?</h4>
+                <p className="text-xs text-[#4c444c] mt-1 leading-relaxed">
+                  Permanently erase <span className="font-bold text-[#1a1c1d]">{userStats.name}</span> and all data for <span className="font-semibold text-[#725477]">{currentAccount?.email}</span> from Cloud Firestore.
+                </p>
+                <p className="text-[11px] text-green-700 bg-green-50 p-2 rounded-xl border border-green-200 mt-2 font-medium">
+                  ✅ Your email will be completely freed up so you can register a new account with it anytime.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setIsConfirmingDelete(false)}
+                  className="flex-1 py-2.5 px-3 rounded-xl border border-[#eeedef] text-xs font-bold text-[#4c444c] hover:bg-[#faf9fb] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleDelete}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
+                >
+                  {isDeleting ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                      <span>Confirm Delete</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

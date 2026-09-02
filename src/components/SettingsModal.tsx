@@ -13,6 +13,7 @@ interface SettingsModalProps {
   onUpdateSettings: (newSettings: Partial<AppSettings>) => void;
   onImportQuests: (importedQuests: Quest[]) => void;
   onResetQuests: () => void;
+  onDeleteAccount?: (accountId: string, email?: string) => Promise<boolean> | void;
 }
 
 const GRADE_PRESETS = [
@@ -56,8 +57,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateSettings,
   onImportQuests,
   onResetQuests,
+  onDeleteAccount,
 }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'performance' | 'workflow' | 'data'>('profile');
+
+  // Delete account modal state
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Form states for Profile
   const [name, setName] = useState(currentAccount.name || '');
@@ -639,6 +646,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {currentAccount.password ? 'Change Password' : 'Set Password'}
                 </button>
               </div>
+
+              {/* Danger Zone: Delete Account */}
+              {onDeleteAccount && (
+                <div className="p-4 rounded-2xl bg-red-50/80 border border-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-[22px]">delete_forever</span>
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-red-900">
+                        Delete Student Account & Database
+                      </h4>
+                      <p className="text-[11px] text-red-800/80 mt-0.5 max-w-md">
+                        Permanently delete this account and erase all database records for <span className="font-semibold text-red-950 underline">{currentAccount.email}</span>.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteConfirmOpen(true)}
+                    className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-xs active:scale-95"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                    <span>Delete Account</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1076,12 +1110,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               {/* Reset to Default Quest Presets */}
-              <div className="p-4 rounded-2xl bg-red-50/50 border border-red-200 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-orange-50/50 border border-orange-200 flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-red-900">
+                  <h4 className="text-xs sm:text-sm font-bold text-orange-900">
                     Restore Sample Quests
                   </h4>
-                  <p className="text-xs text-red-700/80 mt-0.5">
+                  <p className="text-xs text-orange-800/80 mt-0.5">
                     Repopulates sample school homework (Math, Science, English, Chinese) if board is empty.
                   </p>
                 </div>
@@ -1093,25 +1127,141 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       setImportStatus('Reset completed with initial quest presets.');
                     }
                   }}
-                  className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-xs transition-all"
+                  className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-xs transition-all"
                 >
                   <span className="material-symbols-outlined text-[18px]">restart_alt</span>
                   <span>Restore Quests</span>
                 </button>
               </div>
+
+              {/* DANGER ZONE: Delete Account & Cloud Database */}
+              {onDeleteAccount && (
+                <div className="p-4 rounded-2xl bg-red-50/80 border border-red-200 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-red-600 text-[20px]">
+                          delete_forever
+                        </span>
+                        <h4 className="text-xs sm:text-sm font-bold text-red-900">
+                          Delete Student Account & Cloud Database
+                        </h4>
+                      </div>
+                      <p className="text-xs text-red-800/80 max-w-lg leading-relaxed">
+                        Permanently deletes this account and wipes all cloud database records for <span className="font-semibold text-red-950 underline">{currentAccount.email}</span>. Once deleted, this email address is completely freed up so you can create a fresh new account with it.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsDeleteConfirmOpen(true)}
+                      className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-xs transition-all active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+                      <span>Delete Account</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
 
+        {/* Delete Confirmation Modal */}
+        {isDeleteConfirmOpen && (
+          <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-red-200 p-6 space-y-4 text-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto shadow-inner">
+                <span className="material-symbols-outlined text-[32px]">warning</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#1a1c1d]">Delete Account & Database?</h3>
+                <p className="text-xs text-[#4c444c] mt-1.5 leading-relaxed">
+                  Are you sure you want to permanently delete scholar <span className="font-bold text-[#1a1c1d]">{currentAccount.name}</span>?
+                </p>
+                <div className="mt-3 p-3 bg-red-50 rounded-xl border border-red-200 text-left text-xs text-red-900 space-y-1">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px] text-red-600">close</span>
+                    All quests, steps, and history will be permanently deleted.
+                  </p>
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px] text-red-600">close</span>
+                    Cloud Firestore records for <span className="underline">{currentAccount.email}</span> will be erased.
+                  </p>
+                  <p className="font-semibold flex items-center gap-1.5 text-green-700 pt-1 border-t border-red-200/60">
+                    <span className="material-symbols-outlined text-[16px] text-green-600">check_circle</span>
+                    You can immediately create a brand new account using this exact same email!
+                  </p>
+                </div>
+                {deleteError && (
+                  <p className="text-xs text-red-600 font-bold mt-2">{deleteError}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingAccount}
+                  onClick={() => setIsDeleteConfirmOpen(false)}
+                  className="flex-1 py-2.5 px-3 rounded-xl border border-[#eeedef] text-xs font-bold text-[#4c444c] hover:bg-[#faf9fb] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingAccount}
+                  onClick={async () => {
+                    if (!onDeleteAccount) return;
+                    setIsDeletingAccount(true);
+                    setDeleteError('');
+                    try {
+                      await onDeleteAccount(currentAccount.id, currentAccount.email);
+                      onClose();
+                    } catch (err) {
+                      console.error('Delete account error:', err);
+                      setDeleteError('Could not delete account. Please check your connection.');
+                      setIsDeletingAccount(false);
+                    }
+                  }}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
+                >
+                  {isDeletingAccount ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                      <span>Deleting Account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                      <span>Confirm Delete</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Footer Actions */}
         <div className="p-4 px-6 border-t border-[#eeedef] bg-[#faf9fb] flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-[#4c444c] hover:bg-black/5 rounded-xl transition-all"
-          >
-            Cancel
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-bold text-[#4c444c] hover:bg-black/5 rounded-xl transition-all"
+            >
+              Cancel
+            </button>
+            {onDeleteAccount && (
+              <button
+                type="button"
+                onClick={() => setIsDeleteConfirmOpen(true)}
+                className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all flex items-center gap-1.5"
+                title="Permanently delete this account"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                <span>Delete Account</span>
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
             <button
