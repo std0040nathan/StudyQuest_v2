@@ -16,18 +16,10 @@ interface SettingsModalProps {
 }
 
 const GRADE_PRESETS = [
-  { label: 'Grade 5', value: 'Grade 5 / Primary 5', group: 'Primary / Elementary' },
-  { label: 'Grade 6', value: 'Grade 6 / Primary 6', group: 'Primary / Middle' },
-  { label: 'Grade 7', value: 'Grade 7 / Middle School', group: 'Middle School' },
-  { label: 'Grade 8', value: 'Grade 8 / Middle School', group: 'Middle School' },
-  { label: 'Grade 9', value: 'Grade 9 / High School', group: 'High School' },
-  { label: 'Grade 10', value: 'Grade 10 / High School', group: 'High School' },
-  { label: 'Grade 11', value: 'Grade 11 / High School', group: 'Senior High' },
-  { label: 'Grade 12', value: 'Grade 12 / Senior', group: 'Senior High' },
-  { label: 'Primary 5', value: 'Primary 5 (P5)', group: 'Primary' },
-  { label: 'Primary 6', value: 'Primary 6 (P6)', group: 'Primary' },
-  { label: 'Sec 1-2', value: 'Secondary 1-2', group: 'Secondary' },
-  { label: 'Sec 3-4', value: 'Secondary 3-4', group: 'Secondary' },
+  { label: 'Primary 3', value: 'Primary 3', group: 'Primary' },
+  { label: 'Primary 4', value: 'Primary 4', group: 'Primary' },
+  { label: 'Primary 5', value: 'Primary 5', group: 'Primary' },
+  { label: 'Primary 6', value: 'Primary 6', group: 'Primary' },
 ];
 
 const AVATAR_ICONS = [
@@ -71,7 +63,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [name, setName] = useState(currentAccount.name || '');
   const [email, setEmail] = useState(currentAccount.email || 'scholar@studyquest.edu');
   const [age, setAge] = useState<number | ''>(currentAccount.age || 11);
-  const [grade, setGrade] = useState(currentAccount.grade || 'Grade 5');
+  const [grade, setGrade] = useState(currentAccount.grade || 'Primary 3');
   const [school, setSchool] = useState(currentAccount.school || 'Bina Bangsa School');
   const [avatarIcon, setAvatarIcon] = useState(currentAccount.avatarIcon || 'school');
   const [avatarColor, setAvatarColor] = useState(currentAccount.avatarColor || 'bg-[#e0bbe4] text-[#725477]');
@@ -107,7 +99,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setName(currentAccount.name || '');
       setEmail(currentAccount.email || 'scholar@studyquest.edu');
       setAge(currentAccount.age !== undefined ? currentAccount.age : 11);
-      setGrade(currentAccount.grade || 'Grade 5');
+      setGrade(currentAccount.grade || 'Primary 3');
       setSchool(currentAccount.school || 'Bina Bangsa School');
       setAvatarIcon(currentAccount.avatarIcon || 'school');
       setAvatarColor(currentAccount.avatarColor || 'bg-[#e0bbe4] text-[#725477]');
@@ -510,7 +502,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     type="text"
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
-                    placeholder="e.g. Grade 5 / Primary 5"
+                    placeholder="e.g. Primary 3, Primary 4, Primary 5, Primary 6"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#eeedef] focus:border-[#725477] focus:ring-2 focus:ring-[#e0bbe4]/30 outline-none text-xs sm:text-sm font-semibold text-[#1a1c1d]"
                   />
                 </div>
@@ -522,7 +514,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {GRADE_PRESETS.map((preset) => {
-                      const isSelected = grade.toLowerCase().includes(preset.label.toLowerCase()) || grade === preset.value;
+                      const isSelected = grade.trim().toLowerCase() === preset.label.toLowerCase() || grade === preset.value;
                       return (
                         <button
                           key={preset.value}

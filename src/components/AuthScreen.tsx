@@ -38,7 +38,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [school, setSchool] = useState('Bina Bangsa School');
-  const [grade, setGrade] = useState('Grade 5');
+  const [grade, setGrade] = useState('Primary 3');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
@@ -167,7 +167,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         email: inputVal,
         password: loginPassword.trim(),
         school: 'Bina Bangsa School',
-        grade: 'Grade 5',
+        grade: 'Primary 3',
         avatarIcon: 'school',
         avatarColor: 'bg-[#e0bbe4] text-[#725477]',
         stats: {
@@ -253,7 +253,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         email: email.trim(),
         password: password.trim(),
         school: school.trim() || 'Bina Bangsa School',
-        grade: grade.trim() || 'Grade 5',
+        grade: grade.trim() || 'Primary 3',
         avatarIcon: selectedAvatar.icon,
         avatarColor: selectedAvatar.bg,
         stats: initialStats,
@@ -477,7 +477,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     type="text"
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
-                    placeholder="Grade 5 / Grade 6"
+                    placeholder="e.g. Primary 3, Primary 4, Primary 5, Primary 6"
                     className="w-full px-3 py-2.5 rounded-xl bg-[#faf9fb] border border-[#eeedef] focus:border-[#725477] text-xs text-[#1a1c1d] font-medium"
                   />
                 </div>
@@ -485,12 +485,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
               {/* Quick Grade chips */}
               <div className="flex flex-wrap gap-1.5">
-                {['Grade 5', 'Grade 6', 'Primary 5', 'Primary 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'].map((gPreset) => (
+                {['Primary 3', 'Primary 4', 'Primary 5', 'Primary 6'].map((gPreset) => (
                   <button
                     key={gPreset}
                     type="button"
                     onClick={() => setGrade(gPreset)}
-                    className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                       grade === gPreset
                         ? 'bg-[#725477] text-white'
                         : 'bg-[#faf9fb] border border-[#eeedef] text-[#4c444c] hover:bg-[#e0bbe4]/25'
@@ -662,7 +662,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                           {acc.name}
                         </p>
                         <p className="text-[10px] text-[#4c444c]">
-                          {acc.grade || 'Grade 5'} • {acc.school || acc.email}
+                          {acc.grade || 'Primary 3'} • {acc.school || acc.email}
                         </p>
                       </div>
                     </div>

@@ -45,8 +45,8 @@ const FALLBACK_ACTIVE_KEYS = [
 ];
 
 const DEFAULT_SETTINGS: AppSettings = {
-  age: 11,
-  grade: 'Grade 5',
+  age: 9,
+  grade: 'Primary 3',
   school: 'Bina Bangsa School',
   dailyStudyGoalHours: 2,
   lowPowerMode: false,
@@ -90,9 +90,9 @@ const DEFAULT_INITIAL_ACCOUNT: UserAccount = {
   id: 'user-nobody',
   name: 'nobody',
   email: 'nobody@studyquest.edu',
-  age: 11,
+  age: 9,
   school: 'Bina Bangsa School',
-  grade: 'Grade 5',
+  grade: 'Primary 3',
   avatarIcon: 'school',
   avatarColor: 'bg-[#e0bbe4] text-[#725477]',
   stats: INITIAL_USER_STATS,
